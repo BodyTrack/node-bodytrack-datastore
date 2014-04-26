@@ -1,0 +1,34 @@
+{
+  "name": "bodytrack-datastore",
+  "version": "0.1.0",
+  "description": "A Node.js interface for the BodyTrack Datastore.",
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/BodyTrack/node-bodytrack-datastore.git"
+  },
+  "keywords": [
+    "bodytrack",
+    "datastore",
+    "create",
+    "createlab",
+    "time series"
+  ],
+  "author": "Chris Bartley <bartley@cmu.edu>",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/BodyTrack/node-bodytrack-datastore/issues"
+  },
+  "homepage": "https://github.com/BodyTrack/node-bodytrack-datastore",
+  "devDependencies": {
+    "chai": "^1.9.1",
+    "jsdoc": "^3.3.0-alpha5",
+    "mocha": "^1.18.2"
+  },
+  "dependencies": {
+    "temp": "^0.7.0"
+  }
+}

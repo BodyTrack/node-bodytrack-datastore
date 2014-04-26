@@ -1,0 +1,14 @@
+[
+   {
+      "channel_names" : ["humidity", "particles", "raw_particles"],
+      "data" : [[1383774015,36,86,0]]
+   },
+   {
+      "channel_names" : ["humidity", "particles", "raw_particles"],
+      "data" : [[1383774016,37,86,0]]
+   },
+   {
+      "channel_names" : ["humidity", "particles", "raw_particles"],
+      "data" : [[1383774017,36,86,0]]
+   }
+]

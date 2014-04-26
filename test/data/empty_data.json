@@ -1,0 +1,6 @@
+[
+   {
+      "channel_names" : ["humidity", "particles", "raw_particles"],
+      "data" : []
+   }
+]

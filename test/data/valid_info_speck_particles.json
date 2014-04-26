@@ -1,0 +1,14 @@
+{
+   "channel_specs": {
+      "speck.particles": {
+         "channel_bounds": {
+            "max_time": 1384365030,
+            "max_value": 298,
+            "min_time": 1383774015,
+            "min_value": 0
+         }
+      }
+   },
+   "max_time": 1384365030,
+   "min_time": 1383774015
+}

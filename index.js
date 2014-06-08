@@ -43,6 +43,7 @@ function BodyTrackDatastore(config) {
    var dataDir = util.removeTrailingSlash(util.isDefined(config) ? config.dataDir : '');
 
    var buildCommand = function(command, parameters) {
+      // TODO: use path.join() to deal with trailing slash, get rid of util.removeTrailingSlash()
       // surround the command and data directory with single quotes to deal with paths containing spaces
       var launchCommand = "'" + binDir + "/" + command + "' '" + dataDir + "'";
       for (var i = 0; i < parameters.length; i++) {

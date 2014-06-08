@@ -31,7 +31,7 @@ Usage
 
 This module provides a class named `BodyTrackDatastore`.  Create a new instance like this:
 
-    var BodyTrackDatastore = require('./bodytrack-datastore');
+    var BodyTrackDatastore = require('bodytrack-datastore');
     var datastore = new BodyTrackDatastore({
                                            binDir: "/PATH/TO/DATASTORE/BIN/DIRECTORY", 
                                            dataDir: "/PATH/TO/DATASTORE/DATA/DIRECTORY"
@@ -41,6 +41,6 @@ The value for `binDir` should be the path to the directory containing the BodyTr
 
 For full documentation, generate the JSDocs:
 
-    ./node_modules/.bin/jsdoc index.js
+    npm run-script api-docs
     
 You'll find the generated docs in the `out` directory.

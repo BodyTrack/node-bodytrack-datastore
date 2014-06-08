@@ -4,7 +4,8 @@
   "description": "A Node.js interface for the BodyTrack Datastore.",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --reporter spec"
+    "test": "./node_modules/.bin/mocha --reporter spec",
+    "api-docs" : "./node_modules/.bin/jsdoc index.js"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,50 @@
+{"channel_specs" : {
+   "speck1.humidity" : {
+      "channel_bounds" : {
+         "max_time" : 1384355179,
+         "max_value" : 24,
+         "min_time" : 1384355103,
+         "min_value" : 20
+      }
+   },
+   "speck1.particles" : {
+      "channel_bounds" : {
+         "max_time" : 1384355179,
+         "max_value" : 72,
+         "min_time" : 1384355103,
+         "min_value" : 4
+      }
+   },
+   "speck1.raw_particles" : {
+      "channel_bounds" : {
+         "max_time" : 1384355179,
+         "max_value" : 392,
+         "min_time" : 1384355103,
+         "min_value" : 0
+      }
+   },
+   "speck2.humidity" : {
+      "channel_bounds" : {
+         "max_time" : 1383774017,
+         "max_value" : 37,
+         "min_time" : 1383774015,
+         "min_value" : 36
+      }
+   },
+   "speck2.particles" : {
+      "channel_bounds" : {
+         "max_time" : 1383774017,
+         "max_value" : 86,
+         "min_time" : 1383774015,
+         "min_value" : 86
+      }
+   },
+   "speck2.raw_particles" : {
+      "channel_bounds" : {
+         "max_time" : 1383774017,
+         "max_value" : 0,
+         "min_time" : 1383774015,
+         "min_value" : 0
+      }
+   }
+}, "max_time" : 1384355179, "min_time" : 1383774015}

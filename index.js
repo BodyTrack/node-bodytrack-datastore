@@ -5,8 +5,6 @@ var path = require('path');
 var log = require('log4js').getLogger();
 var util = require('./lib/util');
 var DatastoreError = require('./lib/errors').DatastoreError;
-var createJSendSuccess = require('./lib/jsend').createJSendSuccess;
-var createJSendClientError = require('./lib/jsend').createJSendClientError;
 var createJSendClientValidationError = require('./lib/jsend').createJSendClientValidationError;
 var createJSendServerError = require('./lib/jsend').createJSendServerError;
 
@@ -74,8 +72,8 @@ function BodyTrackDatastore(config) {
       exec(command, callback);
    };
 
-   var isUidValid = function(uid) {
-      return util.isInt(uid);
+   var isUserIdValid = function(userId) {
+      return util.isInt(userId);
    };
 
    // PRIVILEGED METHODS
@@ -127,83 +125,126 @@ function BodyTrackDatastore(config) {
 
    /**
     * <p>
-    * Produces the "channel_specs" JSON either for all devices and channels or for only the specified device and
-    * channel. If called with two arguments, returns the channel specs for all devices and channels.  If called with
-    * four arguments, it produces the channel specs for only the specified device and channel.  Produced channel specs
-    * are returned to the caller by calling the <code>callback</code> function.
+    * Produces the "channel_specs" JSON either for all devices and channels, for all channels within a single device,
+    * or for only the specified device and channel.  Min and/or max time may be optionally specified as well. Produced
+    * channel specs are returned to the caller by calling the <code>callback</code> function.
     * </p>
     * <p>
-    * The callback is called with an <code>Error</code> if:
+    * To filter the info, the given <code>filter</code> object must at least contain a <code>userId</code> field. The
+    * optional fields are:
     * <ul>
-    *    <li>the device name is invalid</li>
-    *    <li>the channel name is invalid</li>
-    *    <li>the user ID is not an integer</li>
+    *    <li><code>deviceName</code></li>
+    *    <li><code>channelName</code></li>
+    *    <li><code>minTime</code></li>
+    *    <li><code>maxTime</code></li>
     * </ul>
+    * The <code>channelName</code> will only be considered if the <code>deviceName</code> is specified.
+    * </p>
+    * <p>
+    * The callback is called with a <code>DatastoreError</code> if:
+    * <ul>
+    *    <li>the user ID is not specified</li>
+    *    <li>the user ID is invalid</li>
+    *    <li>the device name (if specified) is invalid</li>
+    *    <li>the channel name (if specified) is invalid</li>
+    *    <li>the min time (if specified) is invalid</li>
+    *    <li>the max time (if specified) is invalid</li>
+    * </ul>
+    * The DatastoreError given to the callback will contain a JSend compliant object in the <code>data</code> property
+    * with more details about the error.
     * </p>
     *
-    * @param {int} uid - the user ID
-    * @param {string} [deviceName] - the device name
-    * @param {string} [channeName] - the channel name
+    * @param {*} filter Object containing the various filter parameters
     * @param {function} callback - callback function with the signature <code>callback(err, info)</code>
-    * @throws an <code>Error</code> if the method is called with 0, 1, or 3 arguments
+    * @throws an <code>Error</code> if the method is called with fewer than 2 arguments
     */
-      // TODO: change this to take an object and a callback function, where the object could have uid, deviceName, channeName, minTime, and maxTime, to allow
-      // for maximum flexibility, and to enable aquisition of statistics for a particular time range
-   this.getInfo = function(uid) {
-      // don't bother doing anything if they didn't provide a callback function!
-      if (arguments.length >= 2) {
+   this.getInfo = function(filter, callback) {
+      // make sure they at least specified the userId
+      if (filter.hasOwnProperty('userId')) {
 
-         var callback = null;
-         var parameters = null;
+         var userId = filter['userId'];
 
-         // if the 2nd argument is a function, then treat it as the callback and get info for all channels
-         if (typeof arguments[1] === 'function') {
-            callback = arguments[1];
-            parameters = ["-r", uid];
+         // make sure the userId is valid
+         if (!isUserIdValid(userId)) {
+            var msg = "User ID must be an integer";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {userId : msg})));
          }
-         // if the 4th argument is a function, then use the 2nd and 3rd as the device name and
-         // channel name, and the 4th as the callback
-         else if (arguments.length >= 4 && typeof arguments[3] === 'function') {
-            callback = arguments[3];
-            var deviceName = arguments[1];
-            var channelName = arguments[2];
 
-            // validate the device and channel name
+         var parameters = ["-r", userId];
+
+         // see whether deviceName is specified
+         if (filter.hasOwnProperty('deviceName') && filter['deviceName'] != null) {
+            var deviceName = filter['deviceName'];
+
+            // make sure the deviceName is valid
             if (!BodyTrackDatastore.isValidKey(deviceName)) {
-               callback(new Error("Invalid device name"));
-               return;
-            }
-            if (!BodyTrackDatastore.isValidKey(channelName)) {
-               callback(new Error("Invalid channel name"));
-               return;
+               var msg = "Invalid device name";
+               return callback(new DatastoreError(createJSendClientValidationError(msg, {deviceName : msg})));
             }
 
-            var deviceAndChannelName = deviceName + "." + channelName;
-            parameters = [uid, "--prefix", deviceAndChannelName];
-         }
-         else {
-            throw new Error("Illegal arguments: expected either 2 or 4 arguments. Usage: getInfo(uid [,deviceName, channelName], callback)");
+            // see whether channelName is specified
+            if (filter.hasOwnProperty('channelName') && filter['channelName'] != null) {
+               var channelName = filter['channelName'];
+
+               // make sure the channelName is valid
+               if (!BodyTrackDatastore.isValidKey(channelName)) {
+                  var msg = "Invalid channel name";
+                  return callback(new DatastoreError(createJSendClientValidationError(msg, {channelName : msg})));
+               }
+
+               // Both deviceName and channelName are specified and valid,
+               // so do a query using userId, deviceName, and channelName
+               parameters.push("--prefix");
+               parameters.push(deviceName + "." + channelName);
+            }
+            else {
+               // The deviceName was specified, but not the channelName,
+               // so do a query only using userId and deviceName
+               parameters.push("--prefix");
+               parameters.push(deviceName);
+            }
          }
 
-         if (!isUidValid(uid)) {
-            callback(new Error("User ID must be an integer"));
-            return;
+         // Now that device and channel have been handled, check for filtering by min/max time...
+
+         // see whether the caller specified the min time
+         if (filter.hasOwnProperty('minTime') && filter['minTime'] != null) {
+            var minTime = filter['minTime'];
+
+            // make sure the minTime is valid
+            if (!util.isNumber(minTime)) {
+               var msg = "Invalid min time";
+               return callback(new DatastoreError(createJSendClientValidationError(msg, {minTime : msg})));
+            }
+            parameters.push("--min-time");
+            parameters.push(minTime);
          }
 
-         if (callback != null) {
-            executeCommand("info", parameters,
-                           function(err, stdout) {
-                              if (err) {
-                                 callback(err);
-                              }
-                              else {
-                                 callback(null, JSON.parse(stdout));
-                              }
-                           });
+         // see whether the caller specified the max time
+         if (filter.hasOwnProperty('maxTime') && filter['maxTime'] != null) {
+            var maxTime = filter['maxTime'];
+
+            // make sure the maxTime is valid
+            if (!util.isNumber(maxTime)) {
+               var msg = "Invalid max time";
+               return callback(new DatastoreError(createJSendClientValidationError(msg, {maxTime : msg})));
+            }
+            parameters.push("--max-time");
+            parameters.push(maxTime);
          }
+
+         // FINALLY, execute the command!
+         executeCommand("info", parameters,
+                        function(err, stdout) {
+                           if (err) {
+                              return callback(new DatastoreError(createJSendServerError('Failed to call info', err)));
+                           }
+                           return callback(null, JSON.parse(stdout));
+                        });
       }
       else {
-         throw new Error("Illegal arguments: expected either 2 or 4 arguments. Usage: getInfo(uid [,deviceName, channelName], callback)");
+         var msg = "User ID is required";
+         return callback(new DatastoreError(createJSendClientValidationError(msg, {userId : msg})));
       }
    };
 
@@ -213,7 +254,7 @@ function BodyTrackDatastore(config) {
     * and <code>offset</code>.  The tile is returned to the caller by calling the <code>callback</code> function.
     * </p>
     * <p>
-    * The callback is called with an <code>DatastoreError</code> if:
+    * The callback is called with a <code>DatastoreError</code> if:
     * <ul>
     *    <li>the user ID is not an integer</li>
     *    <li>the device name is invalid</li>
@@ -235,25 +276,25 @@ function BodyTrackDatastore(config) {
    this.getTile = function(userId, deviceName, channelName, level, offset, callback) {
       if (typeof callback === 'function') {
          // validate inputs
-         if (!isUidValid(userId)) {
+         if (!isUserIdValid(userId)) {
             var msg = "User ID must be an integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, {userId: msg})));
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {userId : msg})));
          }
          if (!util.isInt(level)) {
             var msg = "Level must be an integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, {level: msg})));
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {level : msg})));
          }
          if (!util.isInt(offset)) {
             var msg = "Offset must be an integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, {offset: msg})));
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {offset : msg})));
          }
          if (!BodyTrackDatastore.isValidKey(deviceName)) {
             var msg = "Invalid device name";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, {deviceName: msg})));
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {deviceName : msg})));
          }
          if (!BodyTrackDatastore.isValidKey(channelName)) {
             var msg = "Invalid channel name";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, {channelName: msg})));
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {channelName : msg})));
          }
 
          var parameters = [userId,
@@ -284,54 +325,59 @@ function BodyTrackDatastore(config) {
     * &nbsp;&nbsp;&nbsp;}
     * </code>
     * <p>
-    * Upon failure, the callback function is called with an <code>Error</code> for the first argument.
-    * The callback is called with an <code>Error</code> if:
+    * Upon failure, the callback function is called with a <code>DatastoreError</code> for the first argument.
+    * The callback is called with a <code>DatastoreError</code> if:
     * <ul>
     *    <li>the user ID is not an integer</li>
     *    <li>the device name is invalid</li>
     *    <li>the data is null or undefined</li>
     *    <li>data fails to import</li>
     * </ul>
+    * The DatastoreError given to the callback will contain a JSend compliant object in the <code>data</code> property
+    * with more details about the error.
     * </p>
     *
-    * @param {int} uid - the user ID
+    * @param {int} userId - the user ID
     * @param {string} deviceName - the device name
     * @param {object} data - the JSON data to import
     * @param {function} callback - callback function with the signature <code>callback(err, importResults)</code>
     */
-   this.importJson = function(uid, deviceName, data, callback) {
+   this.importJson = function(userId, deviceName, data, callback) {
 
       if (typeof callback === 'function') {
-         if (!isUidValid(uid)) {
-            return callback(new Error("User ID must be an integer"));
+         if (!isUserIdValid(userId)) {
+            var msg = "User ID must be an integer";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {userId : msg})));
          }
          if (!BodyTrackDatastore.isValidKey(deviceName)) {
-            return callback(new Error("Invalid device name"));
+            var msg = "Invalid device name";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {deviceName : msg})));
          }
          if (!util.isDefined(data)) {
-            return callback(new Error("Data cannot be null or undefined"));
+            var msg = "Data cannot be null or undefined";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {data : msg})));
          }
 
          temp.open('node_bodytrack_datastore_json_data_to_import',
                    function(err, info) {
                       if (err) {
-                         return callback(new Error("failed to open file: " + err));
+                         return callback(new DatastoreError(createJSendServerError('Failed to open file', err)));
                       }
 
                       fs.writeFile(info.path,
                                    JSON.stringify(data),
                                    function(err) {
                                       if (err) {
-                                         return callback(new Error("failed to write file: " + err));
+                                         return callback(new DatastoreError(createJSendServerError('Failed to write file', err)));
                                       }
 
                                       fs.close(info.fd,
                                                function(err) {
                                                   if (err) {
-                                                     return callback(new Error("failed to close file: " + err));
+                                                     return callback(new DatastoreError(createJSendServerError('Failed to close file', err)));
                                                   }
 
-                                                  var parameters = [uid,
+                                                  var parameters = [userId,
                                                                     deviceName,
                                                                     "--format",
                                                                     "json",
@@ -342,7 +388,7 @@ function BodyTrackDatastore(config) {
                                                                  function(err, stdout) {
 
                                                                     if (err) {
-                                                                       return callback(new Error("failed to execute datastore import command: " + err));
+                                                                       return callback(new DatastoreError(createJSendServerError('Failed to execute datastore import command', err)));
                                                                     }
 
                                                                     var datastoreResponse = null;
@@ -355,17 +401,16 @@ function BodyTrackDatastore(config) {
                                                                     }
 
                                                                     var wasSuccessful = datastoreResponse != null &&
-                                                                                        datastoreResponse.failed_records == 0 &&
-                                                                                        datastoreResponse.successful_records > 0;
+                                                                                        typeof datastoreResponse['failed_records'] !== 'undefined' &&
+                                                                                        datastoreResponse['failed_records'] == 0 &&
+                                                                                        typeof datastoreResponse['successful_records'] !== 'undefined' &&
+                                                                                        datastoreResponse['successful_records'] > 0;
 
                                                                     if (wasSuccessful) {
-                                                                       return callback(null, {
-                                                                          "successful_records" : datastoreResponse.successful_records,
-                                                                          "failed_records" : datastoreResponse.failed_records
-                                                                       });
+                                                                       return callback(null, datastoreResponse);
                                                                     }
 
-                                                                    return callback(new Error("failed to parse datastore import response as JSON: " + datastoreResponse));
+                                                                    return callback(new DatastoreError(createJSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
 
                                                                  });
                                                });

@@ -27,7 +27,8 @@
   "devDependencies": {
     "chai": "^1.9.1",
     "jsdoc": "^3.3.0-alpha5",
-    "mocha": "^1.18.2"
+    "mocha": "^1.18.2",
+    "rimraf": "^2.2.8"
   },
   "dependencies": {
     "http-status": "^0.1.8",

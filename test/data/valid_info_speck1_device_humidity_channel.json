@@ -1,0 +1,10 @@
+{"channel_specs" : {
+   "speck1.humidity" : {
+      "channel_bounds" : {
+         "max_time" : 1384355179,
+         "max_value" : 24,
+         "min_time" : 1384355103,
+         "min_value" : 20
+      }
+   }
+}, "max_time" : 1384355179, "min_time" : 1384355103}

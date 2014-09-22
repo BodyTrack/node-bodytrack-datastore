@@ -229,24 +229,19 @@ function BodyTrackDatastore(config) {
       if (typeof callback === 'function') {
          // validate inputs
          if (!isUidValid(uid)) {
-            callback(new Error("User ID must be an integer"));
-            return;
+            return callback(new Error("User ID must be an integer"));
          }
          if (!util.isInt(level)) {
-            callback(new Error("Level must be an integer"));
-            return;
+            return callback(new Error("Level must be an integer"));
          }
          if (!util.isInt(offset)) {
-            callback(new Error("Offset must be an integer"));
-            return;
+            return callback(new Error("Offset must be an integer"));
          }
          if (!BodyTrackDatastore.isValidKey(deviceName)) {
-            callback(new Error("Invalid device name"));
-            return;
+            return callback(new Error("Invalid device name"));
          }
          if (!BodyTrackDatastore.isValidKey(channelName)) {
-            callback(new Error("Invalid channel name"));
-            return;
+            return callback(new Error("Invalid channel name"));
          }
 
          var parameters = [uid,
@@ -257,11 +252,10 @@ function BodyTrackDatastore(config) {
          executeCommand("gettile", parameters,
                         function(err, stdout) {
                            if (err) {
-                              callback(err);
+                              return callback(err);
                            }
-                           else {
-                              callback(null, JSON.parse(stdout));
-                           }
+
+                           return callback(null, JSON.parse(stdout));
                         });
       }
    };
@@ -297,83 +291,74 @@ function BodyTrackDatastore(config) {
 
       if (typeof callback === 'function') {
          if (!isUidValid(uid)) {
-            callback(new Error("User ID must be an integer"));
-            return;
+            return callback(new Error("User ID must be an integer"));
          }
          if (!BodyTrackDatastore.isValidKey(deviceName)) {
-            callback(new Error("Invalid device name"));
-            return;
+            return callback(new Error("Invalid device name"));
          }
          if (!util.isDefined(data)) {
-            callback(new Error("Data cannot be null or undefined"));
-            return;
+            return callback(new Error("Data cannot be null or undefined"));
          }
 
          temp.open('node_bodytrack_datastore_json_data_to_import',
                    function(err, info) {
                       if (err) {
-                         callback(new Error("failed to open file: " + err));
+                         return callback(new Error("failed to open file: " + err));
                       }
-                      else {
-                         fs.writeFile(info.path,
-                                      JSON.stringify(data),
-                                      function(err) {
-                                         if (err) {
-                                            callback(new Error("failed to write file: " + err));
-                                         }
-                                         else {
-                                            fs.close(info.fd,
-                                                     function(err) {
-                                                        if (err) {
-                                                           callback(new Error("failed to close file: " + err));
-                                                        }
-                                                        else {
-                                                           var parameters = [uid,
-                                                                             deviceName,
-                                                                             "--format",
-                                                                             "json",
-                                                                             info.path];
 
-                                                           executeCommand("import",
-                                                                          parameters,
-                                                                          function(err, stdout) {
+                      fs.writeFile(info.path,
+                                   JSON.stringify(data),
+                                   function(err) {
+                                      if (err) {
+                                         return callback(new Error("failed to write file: " + err));
+                                      }
 
-                                                                             if (err) {
-                                                                                callback(new Error("failed to execute datastore import command: " + err));
-                                                                             }
-                                                                             else {
-                                                                                var datastoreResponse = null;
+                                      fs.close(info.fd,
+                                               function(err) {
+                                                  if (err) {
+                                                     return callback(new Error("failed to close file: " + err));
+                                                  }
 
-                                                                                try {
-                                                                                   datastoreResponse = JSON.parse(stdout);
-                                                                                }
-                                                                                catch (e) {
-                                                                                   datastoreResponse = null;
-                                                                                }
+                                                  var parameters = [uid,
+                                                                    deviceName,
+                                                                    "--format",
+                                                                    "json",
+                                                                    info.path];
 
-                                                                                var wasSuccessful = datastoreResponse != null &&
-                                                                                                    datastoreResponse.failed_records == 0 &&
-                                                                                                    datastoreResponse.successful_records > 0;
+                                                  executeCommand("import",
+                                                                 parameters,
+                                                                 function(err, stdout) {
 
-                                                                                if (wasSuccessful) {
-                                                                                   callback(null, {
-                                                                                      "successful_records" : datastoreResponse.successful_records,
-                                                                                      "failed_records" : datastoreResponse.failed_records
-                                                                                   });
-                                                                                }
-                                                                                else {
-                                                                                   callback(new Error("failed to parse datastore import response as JSON: " + datastoreResponse));
-                                                                                }
+                                                                    if (err) {
+                                                                       return callback(new Error("failed to execute datastore import command: " + err));
+                                                                    }
 
-                                                                             }
-                                                                          });
-                                                        }
-                                                     });
-                                         }
-                                      });
-                      }
+                                                                    var datastoreResponse = null;
+
+                                                                    try {
+                                                                       datastoreResponse = JSON.parse(stdout);
+                                                                    }
+                                                                    catch (e) {
+                                                                       datastoreResponse = null;
+                                                                    }
+
+                                                                    var wasSuccessful = datastoreResponse != null &&
+                                                                                        datastoreResponse.failed_records == 0 &&
+                                                                                        datastoreResponse.successful_records > 0;
+
+                                                                    if (wasSuccessful) {
+                                                                       return callback(null, {
+                                                                          "successful_records" : datastoreResponse.successful_records,
+                                                                          "failed_records" : datastoreResponse.failed_records
+                                                                       });
+                                                                    }
+
+                                                                    return callback(new Error("failed to parse datastore import response as JSON: " + datastoreResponse));
+
+                                                                 });
+                                               });
+                                   });
                    });
-
       }
    };
 }

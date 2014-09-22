@@ -1,6 +1,8 @@
 var exec = require('child_process').exec;
 var temp = require('temp');
 var fs = require('fs');
+var path = require('path');
+var log = require('log4js').getLogger();
 var util = require('./lib/util');
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];
@@ -39,13 +41,13 @@ function BodyTrackDatastore(config) {
    }
    // PRIVATE METHODS
 
-   var binDir = util.removeTrailingSlash(util.isDefined(config) ? config.binDir : '');
-   var dataDir = util.removeTrailingSlash(util.isDefined(config) ? config.dataDir : '');
+   // joining with the . ensures there's no trailing slash
+   var binDir = path.join(util.isDefined(config) ? config.binDir : '', '.');
+   var dataDir = path.join(util.isDefined(config) ? config.dataDir : '', '.');
 
    var buildCommand = function(command, parameters) {
-      // TODO: use path.join() to deal with trailing slash, get rid of util.removeTrailingSlash()
       // surround the command and data directory with single quotes to deal with paths containing spaces
-      var launchCommand = "'" + binDir + "/" + command + "' '" + dataDir + "'";
+      var launchCommand = "'" + path.join(binDir, command, '.') + "' '" + dataDir + "'";
       for (var i = 0; i < parameters.length; i++) {
          var param = parameters[i];
          launchCommand += ' ';
@@ -63,7 +65,7 @@ function BodyTrackDatastore(config) {
 
    var executeCommand = function(commandName, parameters, callback) {
       var command = buildCommand(commandName, parameters);
-      console.log("bodytrack-datastore: executing command: " + command);
+      log.debug("BodyTrackDatastore: executing command: " + command);
       exec(command, callback);
    };
 
@@ -82,35 +84,35 @@ function BodyTrackDatastore(config) {
    this.isConfigValid = function() {
 
       if (!fs.existsSync(dataDir)) {
-         console.log("ERROR: bodytrack-datastore: the data directory (" + dataDir + ") does not exist");
+         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the data directory (" + dataDir + ") does not exist");
          return false;
       }
 
       if (!fs.existsSync(binDir)) {
-         console.log("ERROR: bodytrack-datastore: the bin directory (" + binDir + ") does not exist");
+         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the bin directory (" + binDir + ") does not exist");
          return false;
       }
 
       if (!fs.statSync(dataDir).isDirectory()) {
-         console.log("ERROR: bodytrack-datastore: the data directory (" + dataDir + ") is not a directory");
+         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the data directory (" + dataDir + ") is not a directory");
          return false;
       }
 
       if (!fs.statSync(binDir).isDirectory()) {
-         console.log("ERROR: bodytrack-datastore: the bin directory (" + binDir + ") is not a directory");
+         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the bin directory (" + binDir + ") is not a directory");
          return false;
       }
 
       // finally, make sure the executables exist and are files
       for (var i = 0; i < DATASTORE_EXECUTABLES.length; i++) {
-         var exePath = binDir + "/" + DATASTORE_EXECUTABLES[i];
+         var exePath = path.join(binDir, DATASTORE_EXECUTABLES[i]);
          if (!fs.existsSync(exePath)) {
-            console.log("ERROR: bodytrack-datastore: executable (" + exePath + ") does not exist");
+            log.error("ERROR: BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") does not exist");
             return false;
          }
          var exeStat = fs.statSync(exePath);
          if (!exeStat.isFile()) {
-            console.log("ERROR: bodytrack-datastore: executable (" + exePath + ") is not a file");
+            log.error("ERROR: BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") is not a file");
             return false;
          }
       }
@@ -140,6 +142,8 @@ function BodyTrackDatastore(config) {
     * @param {function} callback - callback function with the signature <code>callback(err, info)</code>
     * @throws an <code>Error</code> if the method is called with 0, 1, or 3 arguments
     */
+      // TODO: change this to take an object and a callback function, where the object could have uid, deviceName, channeName, minTime, and maxTime, to allow
+      // for maximum flexibility, and to enable aquisition of statistics for a particular time range
    this.getInfo = function(uid) {
       // don't bother doing anything if they didn't provide a callback function!
       if (arguments.length >= 2) {

@@ -2,6 +2,7 @@ var config = require('./config');
 var fs = require('fs');
 var expect = require('chai').expect;
 var BodyTrackDatastore = require('../index');
+var DatastoreError = require('../lib/errors').DatastoreError;
 
 // data files
 var emptyData = require('./data/empty_data.json');
@@ -410,6 +411,17 @@ describe("The test datastore data directory", function() {
                done();
             };
 
+            var verifyValidationError = function(err, nameOfInvalidField, done){
+               expect(err).to.not.be.null;
+               expect(err instanceof DatastoreError).to.be.true;
+               expect(err.data).to.not.be.null;
+               expect(err.data.code).to.equal(422);
+               expect(err.data.status).to.equal('error');
+               expect(err.data.data).to.not.be.null;
+               expect(err.data.data[nameOfInvalidField]).to.not.be.null;
+               done();
+            };
+
             var emptyTile = {};
 
             it('should return correct tile for valid tile request', function(done) {
@@ -441,176 +453,176 @@ describe("The test datastore data directory", function() {
 
             it('should fail for invalid user id', function(done) {
                datastore.getTile('bubba', 'speck', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'userId', done);
                });
             });
             it('should fail for invalid user id', function(done) {
                datastore.getTile(1.2, 'speck', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'userId', done);
                });
             });
             it('should fail for invalid user id', function(done) {
                datastore.getTile(null, 'speck', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'userId', done);
                });
             });
             it('should fail for invalid user id', function(done) {
                datastore.getTile(undefined, 'speck', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'userId', done);
                });
             });
             it('should fail for invalid user id', function(done) {
                datastore.getTile({}, 'speck', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'userId', done);
                });
             });
             it('should fail for invalid user id', function(done) {
                datastore.getTile("2;", 'speck', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'userId', done);
                });
             });
 
             it('should fail for invalid device name', function(done) {
                datastore.getTile(1, 'speck.', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'deviceName', done);
                });
             });
             it('should fail for invalid device name', function(done) {
                datastore.getTile(1, '.speck', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'deviceName', done);
                });
             });
             it('should fail for invalid device name', function(done) {
                datastore.getTile(1, '', 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'deviceName', done);
                });
             });
             it('should fail for invalid device name', function(done) {
                datastore.getTile(1, null, 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'deviceName', done);
                });
             });
             it('should fail for invalid device name', function(done) {
                datastore.getTile(1, undefined, 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'deviceName', done);
                });
             });
             it('should fail for invalid device name', function(done) {
                datastore.getTile(1, "foo..bar", 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'deviceName', done);
                });
             });
             it('should fail for invalid device name', function(done) {
                datastore.getTile(1, "foo$bar", 'particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'deviceName', done);
                });
             });
 
             it('should fail for invalid channel name', function(done) {
                datastore.getTile(1, 'speck', 'particles.', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'channelName', done);
                });
             });
             it('should fail for invalid channel name', function(done) {
                datastore.getTile(1, 'speck', '.particles', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'channelName', done);
                });
             });
             it('should fail for invalid channel name', function(done) {
                datastore.getTile(1, 'speck', '', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'channelName', done);
                });
             });
             it('should fail for invalid channel name', function(done) {
                datastore.getTile(1, 'speck', null, 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'channelName', done);
                });
             });
             it('should fail for invalid channel name', function(done) {
                datastore.getTile(1, 'speck', undefined, 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'channelName', done);
                });
             });
             it('should fail for invalid channel name', function(done) {
                datastore.getTile(1, 'speck', 'foo..bar', 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'channelName', done);
                });
             });
             it('should fail for invalid channel name', function(done) {
                datastore.getTile(1, 'speck', "foo$bar", 10, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'channelName', done);
                });
             });
 
             it('should fail for invalid level', function(done) {
                datastore.getTile(1, 'speck', 'particles', null, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'level', done);
                });
             });
             it('should fail for invalid level', function(done) {
                datastore.getTile(1, 'speck', 'particles', undefined, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'level', done);
                });
             });
             it('should fail for invalid level', function(done) {
                datastore.getTile(1, 'speck', 'particles', 1.2, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'level', done);
                });
             });
             it('should fail for invalid level', function(done) {
                datastore.getTile(1, 'speck', 'particles', {}, 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'level', done);
                });
             });
             it('should fail for invalid level', function(done) {
                datastore.getTile(1, 'speck', 'particles', [], 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'level', done);
                });
             });
             it('should fail for invalid level', function(done) {
                datastore.getTile(1, 'speck', 'particles', "bubba", 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'level', done);
                });
             });
             it('should fail for invalid level', function(done) {
                datastore.getTile(1, 'speck', 'particles', "2;", 2639, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'level', done);
                });
             });
 
             it('should fail for invalid offset', function(done) {
                datastore.getTile(1, 'speck', 'particles', 10, null, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'offset', done);
                });
             });
             it('should fail for invalid offset', function(done) {
                datastore.getTile(1, 'speck', 'particles', 10, undefined, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'offset', done);
                });
             });
             it('should fail for invalid offset', function(done) {
                datastore.getTile(1, 'speck', 'particles', 10, 1.2, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'offset', done);
                });
             });
             it('should fail for invalid offset', function(done) {
                datastore.getTile(1, 'speck', 'particles', 10, {}, function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'offset', done);
                });
             });
             it('should fail for invalid offset', function(done) {
                datastore.getTile(1, 'speck', 'particles', 10, [], function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'offset', done);
                });
             });
             it('should fail for invalid offset', function(done) {
                datastore.getTile(1, 'speck', 'particles', 10, "bubba", function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'offset', done);
                });
             });
             it('should fail for invalid offset', function(done) {
                datastore.getTile(1, 'speck', 'particles', 10, "2;", function(err) {
-                  verifyFailure(err, done);
+                  verifyValidationError(err, 'offset', done);
                });
             });
          });

@@ -4,6 +4,11 @@ var fs = require('fs');
 var path = require('path');
 var log = require('log4js').getLogger();
 var util = require('./lib/util');
+var DatastoreError = require('./lib/errors').DatastoreError;
+var createJSendSuccess = require('./lib/jsend').createJSendSuccess;
+var createJSendClientError = require('./lib/jsend').createJSendClientError;
+var createJSendClientValidationError = require('./lib/jsend').createJSendClientValidationError;
+var createJSendServerError = require('./lib/jsend').createJSendServerError;
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];
 const VALID_KEY_CHARACTERS_PATTERN = /^[a-zA-Z0-9_\.\-]+$/;
@@ -208,7 +213,7 @@ function BodyTrackDatastore(config) {
     * and <code>offset</code>.  The tile is returned to the caller by calling the <code>callback</code> function.
     * </p>
     * <p>
-    * The callback is called with an <code>Error</code> if:
+    * The callback is called with an <code>DatastoreError</code> if:
     * <ul>
     *    <li>the user ID is not an integer</li>
     *    <li>the device name is invalid</li>
@@ -216,35 +221,42 @@ function BodyTrackDatastore(config) {
     *    <li>the level is not an integer</li>
     *    <li>the offset is not an integer</li>
     * </ul>
+    * The DatastoreError given to the callback will contain a JSend compliant object in the <code>data</code> property
+    * with more details about the error.
     * </p>
     *
-    * @param {int} uid - the user ID
+    * @param {int} userId - the user ID
     * @param {string} deviceName - the device name
     * @param {string} channelName - the channel name
     * @param {int} level - the tile level
     * @param {int} offset - the tile offset
     * @param {function} callback - callback function with the signature <code>callback(err, tile)</code>
     */
-   this.getTile = function(uid, deviceName, channelName, level, offset, callback) {
+   this.getTile = function(userId, deviceName, channelName, level, offset, callback) {
       if (typeof callback === 'function') {
          // validate inputs
-         if (!isUidValid(uid)) {
-            return callback(new Error("User ID must be an integer"));
+         if (!isUidValid(userId)) {
+            var msg = "User ID must be an integer";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {userId: msg})));
          }
          if (!util.isInt(level)) {
-            return callback(new Error("Level must be an integer"));
+            var msg = "Level must be an integer";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {level: msg})));
          }
          if (!util.isInt(offset)) {
-            return callback(new Error("Offset must be an integer"));
+            var msg = "Offset must be an integer";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {offset: msg})));
          }
          if (!BodyTrackDatastore.isValidKey(deviceName)) {
-            return callback(new Error("Invalid device name"));
+            var msg = "Invalid device name";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {deviceName: msg})));
          }
          if (!BodyTrackDatastore.isValidKey(channelName)) {
-            return callback(new Error("Invalid channel name"));
+            var msg = "Invalid channel name";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {channelName: msg})));
          }
 
-         var parameters = [uid,
+         var parameters = [userId,
                            deviceName + "." + channelName,
                            level,
                            offset];
@@ -252,7 +264,7 @@ function BodyTrackDatastore(config) {
          executeCommand("gettile", parameters,
                         function(err, stdout) {
                            if (err) {
-                              return callback(err);
+                              return callback(new DatastoreError(createJSendServerError('Failed to call get tile', err)));
                            }
 
                            return callback(null, JSON.parse(stdout));

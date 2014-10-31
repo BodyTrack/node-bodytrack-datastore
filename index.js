@@ -8,7 +8,21 @@ var createJSendClientValidationError = require('./lib/jsend').createJSendClientV
 var createJSendServerError = require('./lib/jsend').createJSendServerError;
 
 var log4js = require('log4js');
-log4js.configure('log4js-config.json');
+log4js.configure({
+                    "replaceConsole" : true,
+                    "appenders" : [
+                       {
+                          "type" : "console",
+                          "layout" : {
+                             "type" : "pattern",
+                             "pattern" : "%d [%[%p%]] %c - %m"
+                          }
+                       }
+                    ],
+                    "levels" : {
+                       "[all]" : "DEBUG"
+                    }
+                 });
 var log = log4js.getLogger("bodytrack-datastore");
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];

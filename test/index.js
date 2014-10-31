@@ -7,7 +7,21 @@ var log = require('log4js').getLogger();
 var deleteDir = require('rimraf');
 
 var log4js = require('log4js');
-log4js.configure('log4js-config-test.json');
+log4js.configure({
+                    "replaceConsole" : false,
+                    "appenders" : [
+                       {
+                          "type" : "console",
+                          "layout" : {
+                             "type" : "pattern",
+                             "pattern" : "%d{ABSOLUTE} [%[%p%]] %c - %m"
+                          }
+                       }
+                    ],
+                    "levels" : {
+                       "[all]" : "DEBUG"
+                    }
+                 });
 var log = log4js.getLogger("bodytrack-datastore:test");
 
 // data files
@@ -529,7 +543,7 @@ describe("The test datastore data directory", function() {
                   });
                });
                it('should return correct tile for valid tile request that contains no data', function(done) {
-               datastore.getTile(1, 'speck1', 'particles', 10, 2639, function(err, tile) {
+                  datastore.getTile(1, 'speck1', 'particles', 10, 2639, function(err, tile) {
                      verifySuccess(err, tile, emptyTile, done);
                   });
                });

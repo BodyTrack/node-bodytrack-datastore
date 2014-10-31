@@ -6,6 +6,10 @@ var DatastoreError = require('../lib/errors').DatastoreError;
 var log = require('log4js').getLogger();
 var deleteDir = require('rimraf');
 
+var log4js = require('log4js');
+log4js.configure('log4js-config-test.json');
+var log = log4js.getLogger("bodytrack-datastore:test");
+
 // data files
 var emptyData = require('./data/empty_data.json');
 var multipleEmptyData = require('./data/multiple_empty_data.json');

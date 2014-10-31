@@ -2,11 +2,14 @@ var exec = require('child_process').exec;
 var temp = require('temp');
 var fs = require('fs');
 var path = require('path');
-var log = require('log4js').getLogger();
 var util = require('./lib/util');
 var DatastoreError = require('./lib/errors').DatastoreError;
 var createJSendClientValidationError = require('./lib/jsend').createJSendClientValidationError;
 var createJSendServerError = require('./lib/jsend').createJSendServerError;
+
+var log4js = require('log4js');
+log4js.configure('log4js-config.json');
+var log = log4js.getLogger("bodytrack-datastore");
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];
 const VALID_KEY_CHARACTERS_PATTERN = /^[a-zA-Z0-9_\.\-]+$/;
@@ -68,7 +71,7 @@ function BodyTrackDatastore(config) {
 
    var executeCommand = function(commandName, parameters, callback) {
       var command = buildCommand(commandName, parameters);
-      log.debug("BodyTrackDatastore: executing command: " + command);
+      log.debug("executing command: " + command);
       exec(command, callback);
    };
 
@@ -87,22 +90,22 @@ function BodyTrackDatastore(config) {
    this.isConfigValid = function() {
 
       if (!fs.existsSync(dataDir)) {
-         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the data directory (" + dataDir + ") does not exist");
+         log.error("BodyTrackDatastore.isConfigValid(): the data directory (" + dataDir + ") does not exist");
          return false;
       }
 
       if (!fs.existsSync(binDir)) {
-         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the bin directory (" + binDir + ") does not exist");
+         log.error("BodyTrackDatastore.isConfigValid(): the bin directory (" + binDir + ") does not exist");
          return false;
       }
 
       if (!fs.statSync(dataDir).isDirectory()) {
-         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the data directory (" + dataDir + ") is not a directory");
+         log.error("BodyTrackDatastore.isConfigValid(): the data directory (" + dataDir + ") is not a directory");
          return false;
       }
 
       if (!fs.statSync(binDir).isDirectory()) {
-         log.error("ERROR: BodyTrackDatastore.isConfigValid(): the bin directory (" + binDir + ") is not a directory");
+         log.error("BodyTrackDatastore.isConfigValid(): the bin directory (" + binDir + ") is not a directory");
          return false;
       }
 
@@ -110,12 +113,12 @@ function BodyTrackDatastore(config) {
       for (var i = 0; i < DATASTORE_EXECUTABLES.length; i++) {
          var exePath = path.join(binDir, DATASTORE_EXECUTABLES[i]);
          if (!fs.existsSync(exePath)) {
-            log.error("ERROR: BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") does not exist");
+            log.error("BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") does not exist");
             return false;
          }
          var exeStat = fs.statSync(exePath);
          if (!exeStat.isFile()) {
-            log.error("ERROR: BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") is not a file");
+            log.error("BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") is not a file");
             return false;
          }
       }

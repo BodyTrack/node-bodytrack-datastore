@@ -3,7 +3,6 @@ var fs = require('fs');
 var expect = require('chai').expect;
 var BodyTrackDatastore = require('../index');
 var DatastoreError = require('../lib/errors').DatastoreError;
-var log = require('log4js').getLogger();
 var deleteDir = require('rimraf');
 
 var log4js = require('log4js');

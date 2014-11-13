@@ -6,24 +6,7 @@ var util = require('./lib/util');
 var DatastoreError = require('./lib/errors').DatastoreError;
 var createJSendClientValidationError = require('./lib/jsend').createJSendClientValidationError;
 var createJSendServerError = require('./lib/jsend').createJSendServerError;
-
-var log4js = require('log4js');
-log4js.configure({
-                    "replaceConsole" : true,
-                    "appenders" : [
-                       {
-                          "type" : "console",
-                          "layout" : {
-                             "type" : "pattern",
-                             "pattern" : "%d [%[%p%]] %c - %m"
-                          }
-                       }
-                    ],
-                    "levels" : {
-                       "[all]" : "DEBUG"
-                    }
-                 });
-var log = log4js.getLogger("bodytrack-datastore");
+var log = require('log4js').getLogger("bodytrack-datastore");
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];
 const VALID_KEY_CHARACTERS_PATTERN = /^[a-zA-Z0-9_\.\-]+$/;

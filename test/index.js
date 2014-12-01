@@ -139,7 +139,7 @@ describe("The test datastore data directory", function() {
          });
 
          describe('importJson()', function() {
-            var verifyImportSuccess = function(err, response, deviceName, expectedRecordCount, expectedImportBounds, expectedDeviceBounds, done) {
+            var verifyImportSuccess = function(userId, err, response, deviceName, expectedRecordCount, expectedImportBounds, expectedDeviceBounds, done) {
                expect(err).to.be.null;
                expect(response).to.not.be.null;
                expect(response.min_time).to.equal(expectedImportBounds.min_time);
@@ -149,7 +149,7 @@ describe("The test datastore data directory", function() {
 
                // call getInfo to verify the min/max times for the device
                datastore.getInfo({
-                                    userId : 1,
+                                    userId : userId,
                                     deviceName : deviceName
                                  }, function(err2, info) {
                   expect(err2).to.be.null;
@@ -164,7 +164,7 @@ describe("The test datastore data directory", function() {
             describe('Successes', function() {
                it('should import valid dataset 1 without error', function(done) {
                   datastore.importJson(1, "speck1", validData1, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {min_time : 1384355116, max_time : 1384355157},
                                          {min_time : 1384355116, max_time : 1384355157},
                                          done);
@@ -173,7 +173,7 @@ describe("The test datastore data directory", function() {
 
                it('should import valid dataset 2 without error', function(done) {
                   datastore.importJson(1, "speck1", validData2, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {min_time : 1384355106, max_time : 1384355136},
                                          {min_time : 1384355106, max_time : 1384355157},
                                          done);
@@ -182,7 +182,7 @@ describe("The test datastore data directory", function() {
 
                it('should import valid dataset 3 without error', function(done) {
                   datastore.importJson(1, "speck1", validData3, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {min_time : 1384355142, max_time : 1384355176},
                                          {min_time : 1384355106, max_time : 1384355176},
                                          done);
@@ -191,7 +191,7 @@ describe("The test datastore data directory", function() {
 
                it('should import valid dataset 4 without error', function(done) {
                   datastore.importJson(1, "speck1", validData4, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {min_time : 1384355103, max_time : 1384355179},
                                          {min_time : 1384355103, max_time : 1384355179},
                                          done);
@@ -200,7 +200,7 @@ describe("The test datastore data directory", function() {
 
                it('should import valid dataset 5 without error', function(done) {
                   datastore.importJson(1, "speck1", validData5, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {min_time : 1384355137, max_time : 1384355141},
                                          {min_time : 1384355103, max_time : 1384355179},
                                          done);
@@ -209,7 +209,7 @@ describe("The test datastore data directory", function() {
 
                it('should import valid data separated into multiple chunks without error', function(done) {
                   datastore.importJson(1, "speck2", multipleValidData, function(err, response) {
-                     verifyImportSuccess(err, response, "speck2", multipleValidData.length,
+                     verifyImportSuccess(1, err, response, "speck2", multipleValidData.length,
                                          {min_time : 1383774015, max_time : 1383774017},
                                          {min_time : 1383774015, max_time : 1383774017},
                                          done);
@@ -218,38 +218,99 @@ describe("The test datastore data directory", function() {
 
                it('should import empty JSON object without error', function(done) {
                   datastore.importJson(1, "speck1", {}, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {},
                                          {min_time : 1384355103, max_time : 1384355179},
                                          done);
                   });
                });
+
                it('should import an array of one empty object without error', function(done) {
                   datastore.importJson(1, "speck1", [
                      {}
                   ], function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {},
                                          {min_time : 1384355103, max_time : 1384355179},
                                          done);
                   });
                });
+
                it('should import empty data array without error', function(done) {
                   datastore.importJson(1, "speck1", emptyData, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", 1,
+                     verifyImportSuccess(1, err, response, "speck1", 1,
                                          {},
                                          {min_time : 1384355103, max_time : 1384355179},
                                          done);
                   });
                });
+
                it('should import multiple objects with empty data arrays without error', function(done) {
                   datastore.importJson(1, "speck1", multipleEmptyData, function(err, response) {
-                     verifyImportSuccess(err, response, "speck1", multipleEmptyData.length,
+                     verifyImportSuccess(1, err, response, "speck1", multipleEmptyData.length,
                                          {},
                                          {min_time : 1384355103, max_time : 1384355179},
                                          done);
                   });
                });
+
+               it('should import data for a different user without error', function(done) {
+                  datastore.importJson(2,
+                                       "speck1",
+                                       [{
+                                           "channel_names" : ["humidity", "particles", "raw_particles"],
+                                           "data" : [
+                                              [1384357121, 24, 13, 1],
+                                              [1384357122, 25, 14, 2],
+                                              [1384357123, 26, 15, 3],
+                                              [1384357124, 27, 16, 4],
+                                              [1384357125, 28, 17, 5]
+                                           ]
+                                        }],
+                                       function(err, response) {
+                                          verifyImportSuccess(2, err, response, "speck1", 1,
+                                                              {min_time : 1384357121, max_time : 1384357125},
+                                                              {min_time : 1384357121, max_time : 1384357125},
+                                                              done);
+                                       });
+               });
+
+               it('should be able to delete samples without error', function(done) {
+                  datastore.importJson(2, "speck1", [
+                     {
+                        "channel_names" : ["humidity", "particles", "raw_particles"],
+                        "data" : [
+                           // should delete all but sample at time 1384355123
+                           [1384357121, false, false, false],
+                           [1384357122, false, false, false],
+                           //[1384357123, 26, 15, 3],
+                           [1384357124, false, false, false],
+                           [1384357125, false, false, false],
+                        ]
+                     }
+                  ], function(err, response) {
+
+                     // TODO: Known bugs: deletes from the datastore currently (2014-12-01) don't update the min/max
+                     // time or min/max values.  Once that's fixed, we'll need to update this test.
+
+                     verifyImportSuccess(2, err, response, "speck1", 1,
+                                         {min_time : 1384357121, max_time : 1384357125},  // see "Known bugs" above
+                                         {min_time : 1384357121, max_time : 1384357125},  // see "Known bugs" above
+                                         function(){
+
+                                            expect(response.channel_specs.humidity.channel_bounds.min_value).to.equal(24);       // see "Known bugs" above
+                                            expect(response.channel_specs.humidity.channel_bounds.max_value).to.equal(28);       // see "Known bugs" above
+
+                                            expect(response.channel_specs.particles.channel_bounds.min_value).to.equal(13);      // see "Known bugs" above
+                                            expect(response.channel_specs.particles.channel_bounds.max_value).to.equal(17);      // see "Known bugs" above
+
+                                            expect(response.channel_specs.raw_particles.channel_bounds.min_value).to.equal(1);   // see "Known bugs" above
+                                            expect(response.channel_specs.raw_particles.channel_bounds.max_value).to.equal(5);   // see "Known bugs" above
+                                            done();
+                                         });
+                  });
+               });
+
             });
 
             describe('Failures', function() {
@@ -369,7 +430,11 @@ describe("The test datastore data directory", function() {
                   });
                });
                it('should return proper channel specs for known user ID for speck2 device and particles channel', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck2", channelName : "particles"}, function(err, info) {
+                  datastore.getInfo({
+                                       userId : 1,
+                                       deviceName : "speck2",
+                                       channelName : "particles"
+                                    }, function(err, info) {
                      verifySuccess(err, info, validInfoSpeck2DeviceParticlesChannel, done);
                   });
                });

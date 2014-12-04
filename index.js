@@ -1,7 +1,9 @@
 var exec = require('child_process').exec;
+var spawn = require('child_process').spawn;
 var temp = require('temp');
 var fs = require('fs');
 var path = require('path');
+var nodeUtil = require('util');
 var util = require('./lib/util');
 var DatastoreError = require('./lib/errors').DatastoreError;
 var createJSendClientValidationError = require('./lib/jsend').createJSendClientValidationError;
@@ -51,6 +53,7 @@ function BodyTrackDatastore(config) {
    var buildCommand = function(command, parameters) {
       // surround the command and data directory with single quotes to deal with paths containing spaces
       var launchCommand = "'" + path.join(binDir, command, '.') + "' '" + dataDir + "'";
+      parameters = parameters || [];
       for (var i = 0; i < parameters.length; i++) {
          var param = parameters[i];
          launchCommand += ' ';
@@ -154,7 +157,7 @@ function BodyTrackDatastore(config) {
     * with more details about the error.
     * </p>
     *
-    * @param {*} filter Object containing the various filter parameters
+    * @param {object} filter Object containing the various filter parameters
     * @param {function} callback - callback function with the signature <code>callback(err, info)</code>
     * @throws an <code>Error</code> if the method is called with fewer than 2 arguments
     */
@@ -246,6 +249,131 @@ function BodyTrackDatastore(config) {
          var msg = "User ID is required";
          return callback(new DatastoreError(createJSendClientValidationError(msg, {userId : msg})));
       }
+   };
+
+   /**
+    * <p>
+    * Exports data from the specified channel(s) for the given device as CSV, optionally filtered by min and max time.
+    * Data is returned to the caller as an EventEmitter given to the <code>callback</code> function.
+    * </p>
+    * <p>
+    * To filter the data by time, the given <code>filter</code> object may contain a <code>minTime</code> and/or a
+    * <code>maxTime</code>.
+    * <ul>
+    *    <li><code>minTime</code></li>
+    *    <li><code>maxTime</code></li>
+    * </ul>
+    * </p>
+    * <p>
+    * The callback is called with a <code>DatastoreError</code> if:
+    * <ul>
+    *    <li>the user ID is invalid</li>
+    *    <li>the device name (if specified) is invalid</li>
+    *    <li>the channels array is undefined, null, empty, or otherwise not an array</li>
+    *    <li>the min time (if specified) is invalid</li>
+    *    <li>the max time (if specified) is invalid</li>
+    * </ul>
+    * The DatastoreError given to the callback will contain a JSend compliant object in the <code>data</code> property
+    * with more details about the error.
+    * </p>
+    * <p>
+    * Other things to note:
+    * <ul>
+    *    <li>If the min time is greater than the max time, no error is thrown, but no data (other than the header line) will be returned.</li>
+    *    <li>Duplicate requests for the same channel are ignored.</li>
+    *    <li>
+    *       Invalid channel names are ignored.  That is, if a requested channel name has invalid channel name syntax,
+    *       it is ignored.  A requested channel name that has valid syntax but simply doesn't exist for the specified
+    *       device will not be ignored, but will obviously not have any data.
+    *    </li>
+    * </ul>
+    * </p>
+    *
+    * @param {int} userId - the user ID
+    * @param {string} deviceName - the device name
+    * @param {Array} channels - the channel name(s) as an array of strings. Can be null.
+    * @param {object} filter Object containing the various filter parameters
+    * @param {function} callback - callback function with the signature <code>callback(err, eventEmitter)</code>
+    */
+   this.export = function(userId, deviceName, channels, filter, callback) {
+
+      // make sure the userId is valid
+      if (!isUserIdValid(userId)) {
+         var msg = "User ID must be an integer";
+         return callback(new DatastoreError(createJSendClientValidationError(msg, {userId : msg})));
+      }
+
+      // make sure the deviceName is valid
+      if (!BodyTrackDatastore.isValidKey(deviceName)) {
+         var msg = "Invalid device name";
+         return callback(new DatastoreError(createJSendClientValidationError(msg, {deviceName : msg})));
+      }
+
+      // Make sure channels is an array
+      if (!nodeUtil.isArray(channels)) {
+         var msg = "The channels argument must be an array";
+         return callback(new DatastoreError(createJSendClientValidationError(msg, {channels : msg})));
+      }
+
+      // scrub the channels, removing dupes and invalids, but preserving the requested order of the unique ones
+      var alreadyIncludedChannels = {};
+      channels = channels.filter(function(channel) {
+         if (util.isString(channel)) {
+            channel = channel.trim();
+            if (BodyTrackDatastore.isValidKey(channel)) {
+               var isNew = !(channel in alreadyIncludedChannels);
+               alreadyIncludedChannels[channel] = true;
+               return isNew;
+            }
+         }
+         return false;
+      });
+      if (channels.length <= 0) {
+         var msg = "Must specify at least one channel to export";
+         return callback(new DatastoreError(createJSendClientValidationError(msg, {channels : msg})));
+      }
+
+      // always request CSV from the datastore. If the user wants JSON, we have to do the conversion to JSON in Node
+      var parameters = ['--csv'];
+
+      // see whether the caller specified the min time
+      filter = filter || {};
+      if (filter.hasOwnProperty('minTime') && filter['minTime'] != null) {
+         var minTime = filter['minTime'];
+
+         // make sure the minTime is valid
+         if (!util.isNumber(minTime)) {
+            var msg = "Invalid min time";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {minTime : msg})));
+         }
+         parameters.push("--start");
+         parameters.push(minTime);
+      }
+
+      // see whether the caller specified the max time
+      if (filter.hasOwnProperty('maxTime') && filter['maxTime'] != null) {
+         var maxTime = filter['maxTime'];
+
+         // make sure the maxTime is valid
+         if (!util.isNumber(maxTime)) {
+            var msg = "Invalid max time";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, {maxTime : msg})));
+         }
+         parameters.push("--end");
+         parameters.push(maxTime);
+      }
+
+      parameters.push(dataDir);
+      parameters.push(userId);
+
+      channels.forEach(function(channel) {
+         parameters.push(deviceName + "." + channel);
+      });
+
+      // FINALLY, spawn the command, and return to the caller.
+      var exportExe = path.join(binDir, 'export', '.');
+      var command = spawn(exportExe, parameters);
+      return callback(null, command);
    };
 
    /**

@@ -1,6 +1,7 @@
 var config = require('./config');
 var fs = require('fs');
 var expect = require('chai').expect;
+var should = require('should');
 var BodyTrackDatastore = require('../index');
 var DatastoreError = require('../lib/errors').DatastoreError;
 var deleteDir = require('rimraf');
@@ -296,7 +297,7 @@ describe("The test datastore data directory", function() {
                      verifyImportSuccess(2, err, response, "speck1", 1,
                                          {min_time : 1384357121, max_time : 1384357125},  // see "Known bugs" above
                                          {min_time : 1384357121, max_time : 1384357125},  // see "Known bugs" above
-                                         function(){
+                                         function() {
 
                                             expect(response.channel_specs.humidity.channel_bounds.min_value).to.equal(24);       // see "Known bugs" above
                                             expect(response.channel_specs.humidity.channel_bounds.max_value).to.equal(28);       // see "Known bugs" above
@@ -865,6 +866,338 @@ describe("The test datastore data directory", function() {
                expect(BodyTrackDatastore.isValidKey('----')).to.be.true;
             });
          });
-      });
+
+         describe("export()", function() {
+
+            var verifyExportResponse = function(eventEmitter, expectedResponse, done) {
+               var csv = "";
+
+               eventEmitter.stdout.on('data', function(data) {
+                  csv += data;
+               });
+
+               eventEmitter.on('close', function() {
+                  expect(csv).to.equal(expectedResponse);
+                  done();
+               });
+            };
+
+            var userId = 3;
+            var deviceName = "speck";
+            before(function(initDone) {
+               datastore.importJson(userId,
+                                    deviceName,
+                                    [{
+                                        "channel_names" : ["humidity", "particles", "raw_particles", "annotation"],
+                                        "data" : [
+                                           [1384357121, 24, 13, 1, null],
+                                           [1384357122, 25, 14, 2, null],
+                                           [1384357123, 26, 15, 3, "This is the middle data sample"],
+                                           [1384357124, 27, 16, 4, null],
+                                           [1384357125, 28, 17, 5, null]
+                                        ]
+                                     }],
+                                    function(err, response) {
+                                       return initDone(err);
+                                    });
+            });
+
+            describe("successes", function() {
+
+               it('should export successfully all channels without filtering', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["humidity", "particles", "raw_particles", "annotation"],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.humidity,speck.particles,speck.raw_particles,speck.annotation\n" +
+                                                           "1384357121,24,13,1,\n" +
+                                                           "1384357122,25,14,2,\n" +
+                                                           "1384357123,26,15,3,\"This is the middle data sample\"\n" +
+                                                           "1384357124,27,16,4,\n" +
+                                                           "1384357125,28,17,5,\n",
+                                                           done);
+                                   });
+               });
+
+               it('should export successfully a single channel without filtering', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles"],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles\n" +
+                                                           "1384357121,13\n" +
+                                                           "1384357122,14\n" +
+                                                           "1384357123,15\n" +
+                                                           "1384357124,16\n" +
+                                                           "1384357125,17\n",
+                                                           done);
+                                   });
+               });
+
+               it('should ignore multiple instances of a requested channel', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles", "humidity", "particles", "particles", "humidity"],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles,speck.humidity\n" +
+                                                           "1384357121,13,24\n" +
+                                                           "1384357122,14,25\n" +
+                                                           "1384357123,15,26\n" +
+                                                           "1384357124,16,27\n" +
+                                                           "1384357125,17,28\n",
+                                                           done);
+                                   });
+               });
+
+               it('should return no records if the maxTime is less than the timestamp of the first data record', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles"],
+                                   {maxTime: 1384357120},
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles\n",
+                                                           done);
+                                   });
+               });
+
+               it('should return no records if the minTime is greater than the timestamp of the last data record', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles"],
+                                   {minTime: 1384357126},
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles\n",
+                                                           done);
+                                   });
+               });
+
+               it('should return appropriate records when minTime is specified', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles","humidity"],
+                                   {minTime: 1384357123},
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles,speck.humidity\n" +
+                                                           "1384357123,15,26\n" +
+                                                           "1384357124,16,27\n" +
+                                                           "1384357125,17,28\n",
+                                                           done);
+                                   });
+               });
+
+               it('should return appropriate records when maxTime is specified', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles","humidity"],
+                                   {maxTime: 1384357123},
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles,speck.humidity\n" +
+                                                           "1384357121,13,24\n" +
+                                                           "1384357122,14,25\n" +
+                                                           "1384357123,15,26\n",
+                                                           done);
+                                   });
+               });
+
+               it('should return appropriate records when both minTime and maxTime are specified to select a subset', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles","humidity"],
+                                   {minTime: 1384357122, maxTime: 1384357124},
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles,speck.humidity\n" +
+                                                           "1384357122,14,25\n" +
+                                                           "1384357123,15,26\n" +
+                                                           "1384357124,16,27\n",
+                                                           done);
+                                   });
+               });
+
+               it('should return appropriate records when both minTime and maxTime are specified to select a superset', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles","humidity"],
+                                   {minTime: 1384357120, maxTime: 1384357126},
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles,speck.humidity\n" +
+                                                           "1384357121,13,24\n" +
+                                                           "1384357122,14,25\n" +
+                                                           "1384357123,15,26\n" +
+                                                           "1384357124,16,27\n" +
+                                                           "1384357125,17,28\n",
+                                                           done);
+                                   });
+               });
+
+               it('should return no records when both minTime and maxTime are specified, but with values swapped', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["particles","humidity"],
+                                   {minTime: 1384357124, maxTime: 1384357122},
+                                   function(err, eventEmitter) {
+                                      if (err) {
+                                         return done(err);
+                                      }
+
+                                      verifyExportResponse(eventEmitter,
+                                                           "EpochTime,speck.particles,speck.humidity\n",
+                                                           done);
+                                   });
+               });
+
+            });   // end successes
+
+            describe("failures", function() {
+               var verifyValidationError = function(err, eventEmitter, done) {
+                  expect(err).to.not.be.null;
+                  expect(err instanceof DatastoreError).to.be.true;
+                  expect(eventEmitter).to.be.undefined;
+                  err.should.have.property('data');
+                  err.data.should.have.property('code', 422);
+                  err.data.should.have.property('status', 'error');
+                  done();
+               };
+               it('should fail if the userId is null', function(done) {
+                  datastore.export(null,
+                                   deviceName,
+                                   ["particles", "humidity", "particles", "particles", "humidity"],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the userId is invalid', function(done) {
+                  datastore.export("foo",
+                                   deviceName,
+                                   ["particles", "humidity", "particles", "particles", "humidity"],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the deviceName is null', function(done) {
+                  datastore.export(userId,
+                                   null,
+                                   ["particles", "humidity", "particles", "particles", "humidity"],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the deviceName is invalid', function(done) {
+                  datastore.export(userId,
+                                   "..",
+                                   ["particles", "humidity", "particles", "particles", "humidity"],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the channels is null', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   null,
+                                   null,
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the channels is not an array', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   "particles,humidity",
+                                   null,
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the channels array is empty', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   [],
+                                   null,
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the minTime is not a number', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["humidity"],
+                                   {minTime : "foo"},
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+               it('should fail if the maxTime is not a number', function(done) {
+                  datastore.export(userId,
+                                   deviceName,
+                                   ["humidity"],
+                                   {maxTime : "foo"},
+                                   function(err, eventEmitter) {
+                                      verifyValidationError(err, eventEmitter, done);
+                                   });
+               });
+
+            });   // end failures
+
+         });   // end export()
+      });   // end BodyTrackDatastore
    });
 });

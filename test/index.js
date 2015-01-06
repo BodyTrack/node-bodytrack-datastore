@@ -79,27 +79,27 @@ describe('BodyTrackDatastore constructor', function() {
    });
    it("should throw an Error for undefined binDir", function() {
       expect(function() {
-         new BodyTrackDatastore({dataDir : "foo"})
+         new BodyTrackDatastore({ dataDir : "foo" })
       }).to.throw(Error);
    });
    it("should throw an Error for undefined dataDir", function() {
       expect(function() {
-         new BodyTrackDatastore({binDir : "foo"})
+         new BodyTrackDatastore({ binDir : "foo" })
       }).to.throw(Error);
    });
    it("should throw an Error for null binDir and dataDir", function() {
       expect(function() {
-         new BodyTrackDatastore({binDir : null, dataDir : null})
+         new BodyTrackDatastore({ binDir : null, dataDir : null })
       }).to.throw(Error);
    });
    it("should throw an Error for null binDir", function() {
       expect(function() {
-         new BodyTrackDatastore({binDir : null, dataDir : "foo"})
+         new BodyTrackDatastore({ binDir : null, dataDir : "foo" })
       }).to.throw(Error);
    });
    it("should throw an Error for null dataDir", function() {
       expect(function() {
-         new BodyTrackDatastore({binDir : "foo", dataDir : null})
+         new BodyTrackDatastore({ binDir : "foo", dataDir : null })
       }).to.throw(Error);
    });
 });
@@ -130,6 +130,7 @@ describe("The test datastore data directory", function() {
          expect(err.data.code).to.equal(422);
          expect(err.data.status).to.equal('error');
          expect(err.data.data).to.not.be.null;
+         expect(typeof err.data.data[nameOfInvalidField] !== 'undefined').to.be.true;
          expect(err.data.data[nameOfInvalidField]).to.not.be.null;
          done();
       };
@@ -166,8 +167,8 @@ describe("The test datastore data directory", function() {
                it('should import valid dataset 1 without error', function(done) {
                   datastore.importJson(1, "speck1", validData1, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
-                                         {min_time : 1384355116, max_time : 1384355157},
-                                         {min_time : 1384355116, max_time : 1384355157},
+                                         { min_time : 1384355116, max_time : 1384355157 },
+                                         { min_time : 1384355116, max_time : 1384355157 },
                                          done);
                   });
                });
@@ -175,8 +176,8 @@ describe("The test datastore data directory", function() {
                it('should import valid dataset 2 without error', function(done) {
                   datastore.importJson(1, "speck1", validData2, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
-                                         {min_time : 1384355106, max_time : 1384355136},
-                                         {min_time : 1384355106, max_time : 1384355157},
+                                         { min_time : 1384355106, max_time : 1384355136 },
+                                         { min_time : 1384355106, max_time : 1384355157 },
                                          done);
                   });
                });
@@ -184,8 +185,8 @@ describe("The test datastore data directory", function() {
                it('should import valid dataset 3 without error', function(done) {
                   datastore.importJson(1, "speck1", validData3, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
-                                         {min_time : 1384355142, max_time : 1384355176},
-                                         {min_time : 1384355106, max_time : 1384355176},
+                                         { min_time : 1384355142, max_time : 1384355176 },
+                                         { min_time : 1384355106, max_time : 1384355176 },
                                          done);
                   });
                });
@@ -193,8 +194,8 @@ describe("The test datastore data directory", function() {
                it('should import valid dataset 4 without error', function(done) {
                   datastore.importJson(1, "speck1", validData4, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
-                                         {min_time : 1384355103, max_time : 1384355179},
-                                         {min_time : 1384355103, max_time : 1384355179},
+                                         { min_time : 1384355103, max_time : 1384355179 },
+                                         { min_time : 1384355103, max_time : 1384355179 },
                                          done);
                   });
                });
@@ -202,8 +203,8 @@ describe("The test datastore data directory", function() {
                it('should import valid dataset 5 without error', function(done) {
                   datastore.importJson(1, "speck1", validData5, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
-                                         {min_time : 1384355137, max_time : 1384355141},
-                                         {min_time : 1384355103, max_time : 1384355179},
+                                         { min_time : 1384355137, max_time : 1384355141 },
+                                         { min_time : 1384355103, max_time : 1384355179 },
                                          done);
                   });
                });
@@ -211,8 +212,8 @@ describe("The test datastore data directory", function() {
                it('should import valid data separated into multiple chunks without error', function(done) {
                   datastore.importJson(1, "speck2", multipleValidData, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck2", multipleValidData.length,
-                                         {min_time : 1383774015, max_time : 1383774017},
-                                         {min_time : 1383774015, max_time : 1383774017},
+                                         { min_time : 1383774015, max_time : 1383774017 },
+                                         { min_time : 1383774015, max_time : 1383774017 },
                                          done);
                   });
                });
@@ -221,7 +222,7 @@ describe("The test datastore data directory", function() {
                   datastore.importJson(1, "speck1", {}, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
                                          {},
-                                         {min_time : 1384355103, max_time : 1384355179},
+                                         { min_time : 1384355103, max_time : 1384355179 },
                                          done);
                   });
                });
@@ -232,7 +233,7 @@ describe("The test datastore data directory", function() {
                   ], function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
                                          {},
-                                         {min_time : 1384355103, max_time : 1384355179},
+                                         { min_time : 1384355103, max_time : 1384355179 },
                                          done);
                   });
                });
@@ -241,7 +242,7 @@ describe("The test datastore data directory", function() {
                   datastore.importJson(1, "speck1", emptyData, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", 1,
                                          {},
-                                         {min_time : 1384355103, max_time : 1384355179},
+                                         { min_time : 1384355103, max_time : 1384355179 },
                                          done);
                   });
                });
@@ -250,7 +251,7 @@ describe("The test datastore data directory", function() {
                   datastore.importJson(1, "speck1", multipleEmptyData, function(err, response) {
                      verifyImportSuccess(1, err, response, "speck1", multipleEmptyData.length,
                                          {},
-                                         {min_time : 1384355103, max_time : 1384355179},
+                                         { min_time : 1384355103, max_time : 1384355179 },
                                          done);
                   });
                });
@@ -270,8 +271,8 @@ describe("The test datastore data directory", function() {
                                         }],
                                        function(err, response) {
                                           verifyImportSuccess(2, err, response, "speck1", 1,
-                                                              {min_time : 1384357121, max_time : 1384357125},
-                                                              {min_time : 1384357121, max_time : 1384357125},
+                                                              { min_time : 1384357121, max_time : 1384357125 },
+                                                              { min_time : 1384357121, max_time : 1384357125 },
                                                               done);
                                        });
                });
@@ -295,8 +296,8 @@ describe("The test datastore data directory", function() {
                      // time or min/max values.  Once that's fixed, we'll need to update this test.
 
                      verifyImportSuccess(2, err, response, "speck1", 1,
-                                         {min_time : 1384357121, max_time : 1384357125},  // see "Known bugs" above
-                                         {min_time : 1384357121, max_time : 1384357125},  // see "Known bugs" above
+                                         { min_time : 1384357121, max_time : 1384357125 },  // see "Known bugs" above
+                                         { min_time : 1384357121, max_time : 1384357125 },  // see "Known bugs" above
                                          function() {
 
                                             expect(response.channel_specs.humidity.channel_bounds.min_value).to.equal(24);       // see "Known bugs" above
@@ -407,26 +408,30 @@ describe("The test datastore data directory", function() {
                expect(info).to.deep.equal(expectedInfo);
                done();
             };
-            var emptyChannelSpecs = {"channel_specs" : {}};
+            var emptyChannelSpecs = { "channel_specs" : {} };
 
             describe("Successes", function() {
                it('should return proper channel specs for known user ID for all devices', function(done) {
-                  datastore.getInfo({userId : 1}, function(err, info) {
+                  datastore.getInfo({ userId : 1 }, function(err, info) {
                      verifySuccess(err, info, validInfoAllDevices, done);
                   });
                });
                it('should return proper channel specs for known user ID for speck1 device', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1" }, function(err, info) {
                      verifySuccess(err, info, validInfoSpeck1Device, done);
                   });
                });
                it('should return proper channel specs for known user ID for speck2 device', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck2"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck2" }, function(err, info) {
                      verifySuccess(err, info, validInfoSpeck2Device, done);
                   });
                });
                it('should return proper channel specs for known user ID for speck1 device and humidity channel', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : "humidity"}, function(err, info) {
+                  datastore.getInfo({
+                                       userId : 1,
+                                       deviceName : "speck1",
+                                       channelName : "humidity"
+                                    }, function(err, info) {
                      verifySuccess(err, info, validInfoSpeck1DeviceHumidityChannel, done);
                   });
                });
@@ -440,22 +445,22 @@ describe("The test datastore data directory", function() {
                   });
                });
                it('should return empty channel specs for unknown user ID', function(done) {
-                  datastore.getInfo({userId : 42}, function(err, info) {
+                  datastore.getInfo({ userId : 42 }, function(err, info) {
                      verifySuccess(err, info, emptyChannelSpecs, done);
                   });
                });
                it('should return empty channel specs for known user ID and unknown device', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "bogus"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "bogus" }, function(err, info) {
                      verifySuccess(err, info, emptyChannelSpecs, done);
                   });
                });
                it('should return empty channel specs for known user ID and device but unknown channel', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : "bogus"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1", channelName : "bogus" }, function(err, info) {
                      verifySuccess(err, info, emptyChannelSpecs, done);
                   });
                });
                it('should return empty channel specs for known user ID and unknown device and channel', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "unknown", channelName : "bogus"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "unknown", channelName : "bogus" }, function(err, info) {
                      verifySuccess(err, info, emptyChannelSpecs, done);
                   });
                });
@@ -478,107 +483,115 @@ describe("The test datastore data directory", function() {
                   });
                });
                it('should fail if the user ID is not a number', function(done) {
-                  datastore.getInfo({userId : "bubba"}, function(err, info) {
+                  datastore.getInfo({ userId : "bubba" }, function(err, info) {
                      verifyValidationError(err, 'userId', done);
                   });
                });
                it('should fail if the user ID is not an integer', function(done) {
-                  datastore.getInfo({userId : 1.2}, function(err, info) {
+                  datastore.getInfo({ userId : 1.2 }, function(err, info) {
                      verifyValidationError(err, 'userId', done);
                   });
                });
                it('should fail if the user ID is null', function(done) {
-                  datastore.getInfo({userId : null}, function(err, info) {
+                  datastore.getInfo({ userId : null }, function(err, info) {
                      verifyValidationError(err, 'userId', done);
                   });
                });
                it('should fail if the device name has a space in it', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "Foo Bar"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "Foo Bar" }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the device name is an empty string', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : ''}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : '' }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the device name is a "."', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : '.'}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : '.' }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the device name is ".."', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : '..'}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : '..' }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the device name is "sp..eck"', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : 'sp..eck'}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : 'sp..eck' }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the device name is "sp$eck"', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : 'sp$eck'}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : 'sp$eck' }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the device name is an array', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : []}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : [] }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the device name is an object', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : {}}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : {} }, function(err, info) {
                      verifyValidationError(err, 'deviceName', done);
                   });
                });
                it('should fail if the channel name has a space in it', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : "Foo Bar"}, function(err, info) {
+                  datastore.getInfo({
+                                       userId : 1,
+                                       deviceName : "speck1",
+                                       channelName : "Foo Bar"
+                                    }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the channel name is an empty string', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : ''}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1", channelName : '' }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the channel name is a "."', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : '.'}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1", channelName : '.' }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the channel name is ".."', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : '..'}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1", channelName : '..' }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the channel name is "sp..eck"', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : 'sp..eck'}, function(err, info) {
+                  datastore.getInfo({
+                                       userId : 1,
+                                       deviceName : "speck1",
+                                       channelName : 'sp..eck'
+                                    }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the channel name is "sp$eck"', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : 'sp$eck'}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1", channelName : 'sp$eck' }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the channel name is an array', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : []}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1", channelName : [] }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the channel name is an object', function(done) {
-                  datastore.getInfo({userId : 1, deviceName : "speck1", channelName : {}}, function(err, info) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1", channelName : {} }, function(err, info) {
                      verifyValidationError(err, 'channelName', done);
                   });
                });
                it('should fail if the min time is not a number', function(done) {
-                  datastore.getInfo({userId : 1, minTime : "bogus"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, minTime : "bogus" }, function(err, info) {
                      verifyValidationError(err, 'minTime', done);
                   });
                });
                it('should fail if the max time is not a number', function(done) {
-                  datastore.getInfo({userId : 1, maxTime : "bogus"}, function(err, info) {
+                  datastore.getInfo({ userId : 1, maxTime : "bogus" }, function(err, info) {
                      verifyValidationError(err, 'maxTime', done);
                   });
                });
@@ -802,6 +815,206 @@ describe("The test datastore data directory", function() {
             });
          });
 
+         describe("getTiles()", function() {
+            var verifyGetTilesResponse = function(eventEmitter, expectedResponse, done) {
+
+               var s = "";
+
+               eventEmitter.stdout.on('data', function(data) {
+                  s += data;
+               });
+
+               eventEmitter.on('close', function() {
+                  var json = JSON.parse(s);
+                  expect(json).to.deep.equal(expectedResponse);
+                  done();
+               });
+            };
+
+            describe("Successes", function() {
+               it('should return correct tile for valid tile request for 1 channel', function(done) {
+                  datastore.getTiles(["1.speck1.particles"], -3, 21630549, function(err, eventEmitter) {
+                     if (err) {
+                        return done(err);
+                     }
+                     verifyGetTilesResponse(eventEmitter,
+                                            require('./data/gettiles_1.json'),
+                                            done);
+                  });
+               });
+
+               it('should return correct tile for valid tile request for 2 channels', function(done) {
+                  datastore.getTiles(["1.speck1.particles", "1.speck1.humidity"], -3, 21630549, function(err, eventEmitter) {
+                     if (err) {
+                        return done(err);
+                     }
+                     verifyGetTilesResponse(eventEmitter,
+                                            require('./data/gettiles_2.json'),
+                                            done);
+                  });
+               });
+
+               it('should return correct tile for valid tile request for 4 channels', function(done) {
+                  datastore.getTiles(["1.speck1.particles",
+                                      "1.speck1.humidity",
+                                      "1.speck2.particles",
+                                      "1.speck2.humidity"
+                                     ], 15, 82, function(err, eventEmitter) {
+                     if (err) {
+                        return done(err);
+                     }
+                     verifyGetTilesResponse(eventEmitter,
+                                            require('./data/gettiles_3.json'),
+                                            done);
+                  });
+               });
+
+               it('should return correct (empty) tile for request containing non-existent user', function(done) {
+                  var userDeviceChannels = ["4242.speck1.particles"];
+                  datastore.getTiles(userDeviceChannels, -3, 21630549, function(err, eventEmitter) {
+                     if (err) {
+                        return done(err);
+                     }
+                     var expected = require('./data/gettiles_no_data.json');
+                     expected['full_channel_names'] = userDeviceChannels;
+                     verifyGetTilesResponse(eventEmitter,
+                                            expected,
+                                            done);
+                  });
+               });
+
+               it('should return correct (empty) tile for request containing non-existent device', function(done) {
+                  var userDeviceChannels = ["1.bogus.particles"];
+                  datastore.getTiles(userDeviceChannels, -3, 21630549, function(err, eventEmitter) {
+                     if (err) {
+                        return done(err);
+                     }
+                     var expected = require('./data/gettiles_no_data.json');
+                     expected['full_channel_names'] = userDeviceChannels;
+                     verifyGetTilesResponse(eventEmitter,
+                                            expected,
+                                            done);
+                  });
+               });
+
+               it('should return correct (empty) tile for request containing non-existent channel', function(done) {
+                  var userDeviceChannels = ["1.speck1.bogus"];
+                  datastore.getTiles(userDeviceChannels, -3, 21630549, function(err, eventEmitter) {
+                     if (err) {
+                        return done(err);
+                     }
+                     var expected = require('./data/gettiles_no_data.json');
+                     expected['full_channel_names'] = userDeviceChannels;
+                     verifyGetTilesResponse(eventEmitter,
+                                            expected,
+                                            done);
+                  });
+               });
+            });
+
+            describe("Failures", function() {
+               var userDeviceChannels = ["1.speck1.particles"];
+
+               it('should fail is userDeviceChannels is null', function(done) {
+                  datastore.getTiles(null, 10, 2639, function(err) {
+                     verifyValidationError(err, 'userDeviceChannels', done);
+                  });
+               });
+               it('should fail is userDeviceChannels is a number', function(done) {
+                  datastore.getTiles(42, 10, 2639, function(err) {
+                     verifyValidationError(err, 'userDeviceChannels', done);
+                  });
+               });
+               it('should fail is userDeviceChannels is a string', function(done) {
+                  datastore.getTiles("foobar", 10, 2639, function(err) {
+                     verifyValidationError(err, 'userDeviceChannels', done);
+                  });
+               });
+               it('should fail is userDeviceChannels is an object', function(done) {
+                  datastore.getTiles({ "foo" : "bar" }, 10, 2639, function(err) {
+                     verifyValidationError(err, 'userDeviceChannels', done);
+                  });
+               });
+               it('should fail is userDeviceChannels is an empty array', function(done) {
+                  datastore.getTiles([], 10, 2639, function(err) {
+                     verifyValidationError(err, 'userDeviceChannels', done);
+                  });
+               });
+
+               it('should fail for invalid level', function(done) {
+                  datastore.getTiles(userDeviceChannels, null, 2639, function(err) {
+                     verifyValidationError(err, 'level', done);
+                  });
+               });
+               it('should fail for invalid level', function(done) {
+                  datastore.getTiles(userDeviceChannels, undefined, 2639, function(err) {
+                     verifyValidationError(err, 'level', done);
+                  });
+               });
+               it('should fail for invalid level', function(done) {
+                  datastore.getTiles(userDeviceChannels, 1.2, 2639, function(err) {
+                     verifyValidationError(err, 'level', done);
+                  });
+               });
+               it('should fail for invalid level', function(done) {
+                  datastore.getTiles(userDeviceChannels, {}, 2639, function(err) {
+                     verifyValidationError(err, 'level', done);
+                  });
+               });
+               it('should fail for invalid level', function(done) {
+                  datastore.getTiles(userDeviceChannels, [], 2639, function(err) {
+                     verifyValidationError(err, 'level', done);
+                  });
+               });
+               it('should fail for invalid level', function(done) {
+                  datastore.getTiles(userDeviceChannels, "bubba", 2639, function(err) {
+                     verifyValidationError(err, 'level', done);
+                  });
+               });
+               it('should fail for invalid level', function(done) {
+                  datastore.getTiles(userDeviceChannels, "2;", 2639, function(err) {
+                     verifyValidationError(err, 'level', done);
+                  });
+               });
+
+               it('should fail for invalid offset', function(done) {
+                  datastore.getTiles(userDeviceChannels, 10, null, function(err) {
+                     verifyValidationError(err, 'offset', done);
+                  });
+               });
+               it('should fail for invalid offset', function(done) {
+                  datastore.getTiles(userDeviceChannels, 10, undefined, function(err) {
+                     verifyValidationError(err, 'offset', done);
+                  });
+               });
+               it('should fail for invalid offset', function(done) {
+                  datastore.getTiles(userDeviceChannels, 10, 1.2, function(err) {
+                     verifyValidationError(err, 'offset', done);
+                  });
+               });
+               it('should fail for invalid offset', function(done) {
+                  datastore.getTiles(userDeviceChannels, 10, {}, function(err) {
+                     verifyValidationError(err, 'offset', done);
+                  });
+               });
+               it('should fail for invalid offset', function(done) {
+                  datastore.getTiles(userDeviceChannels, 10, [], function(err) {
+                     verifyValidationError(err, 'offset', done);
+                  });
+               });
+               it('should fail for invalid offset', function(done) {
+                  datastore.getTiles(userDeviceChannels, 10, "bubba", function(err) {
+                     verifyValidationError(err, 'offset', done);
+                  });
+               });
+               it('should fail for invalid offset', function(done) {
+                  datastore.getTiles(userDeviceChannels, 10, "2;", function(err) {
+                     verifyValidationError(err, 'offset', done);
+                  });
+               });
+            });
+         });
+
          describe("isValidKey()", function() {
 
             it('should return false for undefined', function() {
@@ -905,192 +1118,192 @@ describe("The test datastore data directory", function() {
             describe("successes", function() {
 
                it('should export successfully all channels without filtering', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["humidity", "particles", "raw_particles", "annotation"],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["humidity", "particles", "raw_particles", "annotation"],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.humidity,speck.particles,speck.raw_particles,speck.annotation\n" +
-                                                           "1384357121,24,13,1,\n" +
-                                                           "1384357122,25,14,2,\n" +
-                                                           "1384357123,26,15,3,\"This is the middle data sample\"\n" +
-                                                           "1384357124,27,16,4,\n" +
-                                                           "1384357125,28,17,5,\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.humidity,speck.particles,speck.raw_particles,speck.annotation\n" +
+                                                               "1384357121,24,13,1,\n" +
+                                                               "1384357122,25,14,2,\n" +
+                                                               "1384357123,26,15,3,\"This is the middle data sample\"\n" +
+                                                               "1384357124,27,16,4,\n" +
+                                                               "1384357125,28,17,5,\n",
+                                                               done);
+                                       });
                });
 
                it('should export successfully a single channel without filtering', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles"],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles"],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles\n" +
-                                                           "1384357121,13\n" +
-                                                           "1384357122,14\n" +
-                                                           "1384357123,15\n" +
-                                                           "1384357124,16\n" +
-                                                           "1384357125,17\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles\n" +
+                                                               "1384357121,13\n" +
+                                                               "1384357122,14\n" +
+                                                               "1384357123,15\n" +
+                                                               "1384357124,16\n" +
+                                                               "1384357125,17\n",
+                                                               done);
+                                       });
                });
 
                it('should ignore multiple instances of a requested channel', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles", "humidity", "particles", "particles", "humidity"],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles", "humidity", "particles", "particles", "humidity"],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles,speck.humidity\n" +
-                                                           "1384357121,13,24\n" +
-                                                           "1384357122,14,25\n" +
-                                                           "1384357123,15,26\n" +
-                                                           "1384357124,16,27\n" +
-                                                           "1384357125,17,28\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles,speck.humidity\n" +
+                                                               "1384357121,13,24\n" +
+                                                               "1384357122,14,25\n" +
+                                                               "1384357123,15,26\n" +
+                                                               "1384357124,16,27\n" +
+                                                               "1384357125,17,28\n",
+                                                               done);
+                                       });
                });
 
                it('should return no records if the maxTime is less than the timestamp of the first data record', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles"],
-                                   {maxTime: 1384357120},
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles"],
+                                       { maxTime : 1384357120 },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles\n",
+                                                               done);
+                                       });
                });
 
                it('should return no records if the minTime is greater than the timestamp of the last data record', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles"],
-                                   {minTime: 1384357126},
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles"],
+                                       { minTime : 1384357126 },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles\n",
+                                                               done);
+                                       });
                });
 
                it('should return appropriate records when minTime is specified', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles","humidity"],
-                                   {minTime: 1384357123},
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles", "humidity"],
+                                       { minTime : 1384357123 },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles,speck.humidity\n" +
-                                                           "1384357123,15,26\n" +
-                                                           "1384357124,16,27\n" +
-                                                           "1384357125,17,28\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles,speck.humidity\n" +
+                                                               "1384357123,15,26\n" +
+                                                               "1384357124,16,27\n" +
+                                                               "1384357125,17,28\n",
+                                                               done);
+                                       });
                });
 
                it('should return appropriate records when maxTime is specified', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles","humidity"],
-                                   {maxTime: 1384357123},
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles", "humidity"],
+                                       { maxTime : 1384357123 },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles,speck.humidity\n" +
-                                                           "1384357121,13,24\n" +
-                                                           "1384357122,14,25\n" +
-                                                           "1384357123,15,26\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles,speck.humidity\n" +
+                                                               "1384357121,13,24\n" +
+                                                               "1384357122,14,25\n" +
+                                                               "1384357123,15,26\n",
+                                                               done);
+                                       });
                });
 
                it('should return appropriate records when both minTime and maxTime are specified to select a subset', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles","humidity"],
-                                   {minTime: 1384357122, maxTime: 1384357124},
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles", "humidity"],
+                                       { minTime : 1384357122, maxTime : 1384357124 },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles,speck.humidity\n" +
-                                                           "1384357122,14,25\n" +
-                                                           "1384357123,15,26\n" +
-                                                           "1384357124,16,27\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles,speck.humidity\n" +
+                                                               "1384357122,14,25\n" +
+                                                               "1384357123,15,26\n" +
+                                                               "1384357124,16,27\n",
+                                                               done);
+                                       });
                });
 
                it('should return appropriate records when both minTime and maxTime are specified to select a superset', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles","humidity"],
-                                   {minTime: 1384357120, maxTime: 1384357126},
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles", "humidity"],
+                                       { minTime : 1384357120, maxTime : 1384357126 },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles,speck.humidity\n" +
-                                                           "1384357121,13,24\n" +
-                                                           "1384357122,14,25\n" +
-                                                           "1384357123,15,26\n" +
-                                                           "1384357124,16,27\n" +
-                                                           "1384357125,17,28\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles,speck.humidity\n" +
+                                                               "1384357121,13,24\n" +
+                                                               "1384357122,14,25\n" +
+                                                               "1384357123,15,26\n" +
+                                                               "1384357124,16,27\n" +
+                                                               "1384357125,17,28\n",
+                                                               done);
+                                       });
                });
 
                it('should return no records when both minTime and maxTime are specified, but with values swapped', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["particles","humidity"],
-                                   {minTime: 1384357124, maxTime: 1384357122},
-                                   function(err, eventEmitter) {
-                                      if (err) {
-                                         return done(err);
-                                      }
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["particles", "humidity"],
+                                       { minTime : 1384357124, maxTime : 1384357122 },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
 
-                                      verifyExportResponse(eventEmitter,
-                                                           "EpochTime,speck.particles,speck.humidity\n",
-                                                           done);
-                                   });
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,speck.particles,speck.humidity\n",
+                                                               done);
+                                       });
                });
 
             });   // end successes
@@ -1106,93 +1319,93 @@ describe("The test datastore data directory", function() {
                   done();
                };
                it('should fail if the userId is null', function(done) {
-                  datastore.export(null,
-                                   deviceName,
-                                   ["particles", "humidity", "particles", "particles", "humidity"],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(null,
+                                       deviceName,
+                                       ["particles", "humidity", "particles", "particles", "humidity"],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the userId is invalid', function(done) {
-                  datastore.export("foo",
-                                   deviceName,
-                                   ["particles", "humidity", "particles", "particles", "humidity"],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData("foo",
+                                       deviceName,
+                                       ["particles", "humidity", "particles", "particles", "humidity"],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the deviceName is null', function(done) {
-                  datastore.export(userId,
-                                   null,
-                                   ["particles", "humidity", "particles", "particles", "humidity"],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(userId,
+                                       null,
+                                       ["particles", "humidity", "particles", "particles", "humidity"],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the deviceName is invalid', function(done) {
-                  datastore.export(userId,
-                                   "..",
-                                   ["particles", "humidity", "particles", "particles", "humidity"],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(userId,
+                                       "..",
+                                       ["particles", "humidity", "particles", "particles", "humidity"],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the channels is null', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   null,
-                                   null,
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       null,
+                                       null,
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the channels is not an array', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   "particles,humidity",
-                                   null,
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       "particles,humidity",
+                                       null,
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the channels array is empty', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   [],
-                                   null,
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       [],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the minTime is not a number', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["humidity"],
-                                   {minTime : "foo"},
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["humidity"],
+                                       { minTime : "foo" },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
                it('should fail if the maxTime is not a number', function(done) {
-                  datastore.export(userId,
-                                   deviceName,
-                                   ["humidity"],
-                                   {maxTime : "foo"},
-                                   function(err, eventEmitter) {
-                                      verifyValidationError(err, eventEmitter, done);
-                                   });
+                  datastore.exportData(userId,
+                                       deviceName,
+                                       ["humidity"],
+                                       { maxTime : "foo" },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
                });
 
             });   // end failures

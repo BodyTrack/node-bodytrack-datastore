@@ -140,7 +140,12 @@
           <option name="FIELD_PREFIX" value="" />
           <option name="SPACE_BEFORE_PROPERTY_COLON" value="true" />
           <option name="SPACE_BEFORE_FUNCTION_LEFT_PARENTH" value="false" />
+          <option name="SPACES_WITHIN_OBJECT_LITERAL_BRACES" value="true" />
         </JSCodeStyleSettings>
+        <JSON>
+          <option name="SPACE_BEFORE_COLON" value="true" />
+          <option name="ARRAY_WRAPPING" value="5" />
+        </JSON>
         <XML>
           <option name="XML_ATTRIBUTE_WRAP" value="0" />
           <option name="XML_TEXT_WRAP" value="0" />
@@ -271,7 +276,13 @@
         </codeStyleSettings>
         <codeStyleSettings language="JSON">
           <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
+          <option name="SPACE_WITHIN_BRACES" value="true" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+          <indentOptions>
+            <option name="INDENT_SIZE" value="3" />
+            <option name="CONTINUATION_INDENT_SIZE" value="6" />
+            <option name="TAB_SIZE" value="3" />
+          </indentOptions>
         </codeStyleSettings>
         <codeStyleSettings language="JSP">
           <indentOptions>
@@ -313,6 +324,13 @@
           <option name="KEEP_BLANK_LINES_IN_DECLARATIONS" value="1" />
           <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
           <option name="PARENT_SETTINGS_INSTALLED" value="true" />
+        </codeStyleSettings>
+        <codeStyleSettings language="SASS">
+          <indentOptions>
+            <option name="INDENT_SIZE" value="3" />
+            <option name="CONTINUATION_INDENT_SIZE" value="6" />
+            <option name="TAB_SIZE" value="3" />
+          </indentOptions>
         </codeStyleSettings>
         <codeStyleSettings language="SCSS">
           <indentOptions>

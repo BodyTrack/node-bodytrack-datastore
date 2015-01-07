@@ -442,15 +442,18 @@ function BodyTrackDatastore(config) {
 
    /**
     * <p>
-    * Returns the tiles for the given <code>userDeviceChannels</code>, <code>level</code>, and <code>offset</code>.  The
+    * Returns the tiles for the given <code>userIdDeviceChannelObjects</code>, <code>level</code>, and <code>offset</code>.  The
     * tiles are returned to the caller as an EventEmitter given to the <code>callback</code> function. The
-    * <code>userDeviceChannels</code> argument must be a non-empty array of strings, where each string is of the form
-    * <code>USER_ID.DEVICE_NAME.CHANNEL_NAME</code>.
+    * <code>userIdDeviceChannelObjects</code> argument must be a non-empty array of objects, where each object contains of the
+    * form: <code>{userId: USER_ID, deviceName: "DEVICE_NAME", channelName: "CHANNEL_NAME"}</code>.  The
+    * <code>userId</code> field must be an integer, and the <code>deviceName</code> and <code>channelName</code> fields
+    * must be strings.
     * </p>
     * <p>
     * The callback is called with a <code>DatastoreError</code> if:
     * <ul>
-    *    <li>the userDeviceChannels is not an array</li>
+    *    <li>the userIdDeviceChannelObjects is not an non-empty array of objects</li>
+    *    <li>any object in the userIdDeviceChannelObjects array contains invalid fields</li>
     *    <li>the level is not an integer</li>
     *    <li>the offset is not an integer</li>
     * </ul>
@@ -461,25 +464,50 @@ function BodyTrackDatastore(config) {
     * NOTE: At this time, only numeric channels will return data.  Non-numeric channels will always return <code>null</code> values.
     * </p>
     *
-    * @param {Array} userDeviceChannels - a non-empty array of strings, where each element must be of the form <code>USER_ID.DEVICE_NAME.CHANNEL_NAME</code>
+    * @param {Array} userIdDeviceChannelObjects - a non-empty array of objects. See above for details.
     * @param {int} level - the tile level
     * @param {int} offset - the tile offset
     * @param {function} callback - callback function with the signature <code>callback(err, eventEmitter)</code>
     */
-   this.getTiles = function(userDeviceChannels, level, offset, callback) {
+   this.getTiles = function(userIdDeviceChannelObjects, level, offset, callback) {
       if (typeof callback === 'function') {
          // validate inputs
-         if (Array.isArray(userDeviceChannels) && userDeviceChannels.length > 0) {
+         var userIdDeviceChannels = [];
+
+         if (Array.isArray(userIdDeviceChannelObjects) && userIdDeviceChannelObjects.length > 0) {
             // check each item in the array to make sure they're all strings.
-            for (var i = 0; i < userDeviceChannels.length; i++) {
-               if (!util.isString(userDeviceChannels[i])) {
-                  var msg = "userDeviceChannels array must contain only strings";
+            for (var i = 0; i < userIdDeviceChannelObjects.length; i++) {
+               var o = userIdDeviceChannelObjects[i];
+               var userId = o.userId;
+               var deviceName = o.deviceName;
+               var channelName = o.channelName;
+               if (util.isObject(o)) {
+                  var userIdDeviceChannel = userId + "." + deviceName + "." + channelName;
+
+                  if (!isUserIdValid(userId)) {
+                     var msg = "User ID must be an integer in [" + userIdDeviceChannel + "]";
+                     return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
+                  }
+                  if (!BodyTrackDatastore.isValidKey(deviceName)) {
+                     var msg = "Invalid device name [" + deviceName + "] in [" + userIdDeviceChannel + "]";
+                     return callback(new DatastoreError(createJSendClientValidationError(msg, { deviceName : msg })));
+                  }
+                  if (!BodyTrackDatastore.isValidKey(channelName)) {
+                     var msg = "Invalid channel name [" + channelName + "] in [" + userIdDeviceChannel + "]";
+                     return callback(new DatastoreError(createJSendClientValidationError(msg, { channelName : msg })));
+                  }
+
+                  // if no error by now, then it's valid, so hang on to it
+                  userIdDeviceChannels.push(userIdDeviceChannel);
+               }
+               else {
+                  var msg = "userIdDeviceChannelObjects array must contain only objects";
                   return callback(new DatastoreError(createJSendClientValidationError(msg, { userDeviceChannels : msg })));
                }
             }
          }
          else {
-            var msg = "userDeviceChannels must be a non-empty array of strings";
+            var msg = "userIdDeviceChannelObjects must be a non-empty array of objects";
             return callback(new DatastoreError(createJSendClientValidationError(msg, { userDeviceChannels : msg })));
          }
          if (!util.isInt(level)) {
@@ -493,7 +521,7 @@ function BodyTrackDatastore(config) {
 
          var parameters = [dataDir,
                            '--multi',
-                           userDeviceChannels.join(','),
+                           userIdDeviceChannels.join(','),
                            level,
                            offset];
 

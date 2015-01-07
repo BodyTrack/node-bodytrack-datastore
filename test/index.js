@@ -833,7 +833,11 @@ describe("The test datastore data directory", function() {
 
             describe("Successes", function() {
                it('should return correct tile for valid tile request for 1 channel', function(done) {
-                  datastore.getTiles(["1.speck1.particles"], -3, 21630549, function(err, eventEmitter) {
+                  datastore.getTiles([{
+                                         userId : 1,
+                                         deviceName : "speck1",
+                                         channelName : "particles"
+                                      }], -3, 21630549, function(err, eventEmitter) {
                      if (err) {
                         return done(err);
                      }
@@ -844,7 +848,10 @@ describe("The test datastore data directory", function() {
                });
 
                it('should return correct tile for valid tile request for 2 channels', function(done) {
-                  datastore.getTiles(["1.speck1.particles", "1.speck1.humidity"], -3, 21630549, function(err, eventEmitter) {
+                  datastore.getTiles([
+                                        { userId : 1, deviceName : "speck1", channelName : "particles" },
+                                        { userId : 1, deviceName : "speck1", channelName : "humidity" }
+                                     ], -3, 21630549, function(err, eventEmitter) {
                      if (err) {
                         return done(err);
                      }
@@ -855,10 +862,11 @@ describe("The test datastore data directory", function() {
                });
 
                it('should return correct tile for valid tile request for 4 channels', function(done) {
-                  datastore.getTiles(["1.speck1.particles",
-                                      "1.speck1.humidity",
-                                      "1.speck2.particles",
-                                      "1.speck2.humidity"
+                  datastore.getTiles([
+                                        { userId : 1, deviceName : "speck1", channelName : "particles" },
+                                        { userId : 1, deviceName : "speck1", channelName : "humidity" },
+                                        { userId : 1, deviceName : "speck2", channelName : "particles" },
+                                        { userId : 1, deviceName : "speck2", channelName : "humidity" }
                                      ], 15, 82, function(err, eventEmitter) {
                      if (err) {
                         return done(err);
@@ -870,13 +878,17 @@ describe("The test datastore data directory", function() {
                });
 
                it('should return correct (empty) tile for request containing non-existent user', function(done) {
-                  var userDeviceChannels = ["4242.speck1.particles"];
+                  var userDeviceChannels = [{
+                                               userId : 4242,
+                                               deviceName : "speck1",
+                                               channelName : "particles"
+                                            }];
                   datastore.getTiles(userDeviceChannels, -3, 21630549, function(err, eventEmitter) {
                      if (err) {
                         return done(err);
                      }
                      var expected = require('./data/gettiles_no_data.json');
-                     expected['full_channel_names'] = userDeviceChannels;
+                     expected['full_channel_names'] = [userDeviceChannels[0].userId + "." + userDeviceChannels[0].deviceName + "." + userDeviceChannels[0].channelName];
                      verifyGetTilesResponse(eventEmitter,
                                             expected,
                                             done);
@@ -884,13 +896,17 @@ describe("The test datastore data directory", function() {
                });
 
                it('should return correct (empty) tile for request containing non-existent device', function(done) {
-                  var userDeviceChannels = ["1.bogus.particles"];
+                  var userDeviceChannels = [{
+                                               userId : 1,
+                                               deviceName : "bogus",
+                                               channelName : "particles"
+                                            }];
                   datastore.getTiles(userDeviceChannels, -3, 21630549, function(err, eventEmitter) {
                      if (err) {
                         return done(err);
                      }
                      var expected = require('./data/gettiles_no_data.json');
-                     expected['full_channel_names'] = userDeviceChannels;
+                     expected['full_channel_names'] = [userDeviceChannels[0].userId + "." + userDeviceChannels[0].deviceName + "." + userDeviceChannels[0].channelName];
                      verifyGetTilesResponse(eventEmitter,
                                             expected,
                                             done);
@@ -898,13 +914,17 @@ describe("The test datastore data directory", function() {
                });
 
                it('should return correct (empty) tile for request containing non-existent channel', function(done) {
-                  var userDeviceChannels = ["1.speck1.bogus"];
+                  var userDeviceChannels = [{
+                                               userId : 1,
+                                               deviceName : "speck1",
+                                               channelName : "bogus"
+                                            }];
                   datastore.getTiles(userDeviceChannels, -3, 21630549, function(err, eventEmitter) {
                      if (err) {
                         return done(err);
                      }
                      var expected = require('./data/gettiles_no_data.json');
-                     expected['full_channel_names'] = userDeviceChannels;
+                     expected['full_channel_names'] = [userDeviceChannels[0].userId + "." + userDeviceChannels[0].deviceName + "." + userDeviceChannels[0].channelName];
                      verifyGetTilesResponse(eventEmitter,
                                             expected,
                                             done);
@@ -913,31 +933,68 @@ describe("The test datastore data directory", function() {
             });
 
             describe("Failures", function() {
-               var userDeviceChannels = ["1.speck1.particles"];
+               var userDeviceChannels = [{
+                                            userId : 1,
+                                            deviceName : "speck1",
+                                            channelName : "particles"
+                                         }];
 
-               it('should fail is userDeviceChannels is null', function(done) {
+               it('should fail if userDeviceChannels is null', function(done) {
                   datastore.getTiles(null, 10, 2639, function(err) {
                      verifyValidationError(err, 'userDeviceChannels', done);
                   });
                });
-               it('should fail is userDeviceChannels is a number', function(done) {
+               it('should fail if userDeviceChannels is a number', function(done) {
                   datastore.getTiles(42, 10, 2639, function(err) {
                      verifyValidationError(err, 'userDeviceChannels', done);
                   });
                });
-               it('should fail is userDeviceChannels is a string', function(done) {
+               it('should fail if userDeviceChannels is a string', function(done) {
                   datastore.getTiles("foobar", 10, 2639, function(err) {
                      verifyValidationError(err, 'userDeviceChannels', done);
                   });
                });
-               it('should fail is userDeviceChannels is an object', function(done) {
+               it('should fail if userDeviceChannels is an object', function(done) {
                   datastore.getTiles({ "foo" : "bar" }, 10, 2639, function(err) {
                      verifyValidationError(err, 'userDeviceChannels', done);
                   });
                });
-               it('should fail is userDeviceChannels is an empty array', function(done) {
+               it('should fail if userDeviceChannels is an empty array', function(done) {
                   datastore.getTiles([], 10, 2639, function(err) {
                      verifyValidationError(err, 'userDeviceChannels', done);
+                  });
+               });
+
+               it('should fail if userDeviceChannels contains an item that is not an object', function(done) {
+                  datastore.getTiles([42], 10, 2639, function(err) {
+                     verifyValidationError(err, 'userDeviceChannels', done);
+                  });
+               });
+               it('should fail if userDeviceChannels contains an item with an invalid userId', function(done) {
+                  datastore.getTiles([{
+                                         userId : "foo",
+                                         deviceName : "speck1",
+                                         channelName : "particles"
+                                      }], 10, 2639, function(err) {
+                     verifyValidationError(err, 'userId', done);
+                  });
+               });
+               it('should fail if userDeviceChannels contains an item with an invalid deviceName', function(done) {
+                  datastore.getTiles([{
+                                         userId : 1,
+                                         deviceName : 42,
+                                         channelName : "particles"
+                                      }], 10, 2639, function(err) {
+                     verifyValidationError(err, 'deviceName', done);
+                  });
+               });
+               it('should fail if userDeviceChannels contains an item with an invalid channelName', function(done) {
+                  datastore.getTiles([{
+                                         userId : 1,
+                                         deviceName : "speck1",
+                                         channelName : []
+                                      }], 10, 2639, function(err) {
+                     verifyValidationError(err, 'channelName', done);
                   });
                });
 

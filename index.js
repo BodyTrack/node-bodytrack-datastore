@@ -1,6 +1,6 @@
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
-var temp = require('temp');
+var tmp = require('tmp');
 var fs = require('fs');
 var path = require('path');
 var util = require('./lib/util');
@@ -588,64 +588,68 @@ function BodyTrackDatastore(config) {
             return callback(new DatastoreError(createJSendClientValidationError(msg, { data : msg })));
          }
 
-         temp.open('node_bodytrack_datastore_json_data_to_import',
-                   function(err, info) {
-                      if (err) {
-                         return callback(new DatastoreError(createJSendServerError('Failed to open file', err)));
-                      }
+         // cleanup the temporary files even when an uncaught exception occurs
+         tmp.setGracefulCleanup();
 
-                      fs.writeFile(info.path,
-                                   JSON.stringify(data),
-                                   function(err) {
-                                      if (err) {
-                                         return callback(new DatastoreError(createJSendServerError('Failed to write file', err)));
-                                      }
+         // create a temp file to write the uploaded data so the datastore can import it
+         tmp.file({ prefix : 'node_bodytrack_datastore_json_data_to_import_', postfix : '.json' },
+                  function(err, tmpFilePath, tempFileDescriptor) {
+                     if (err) {
+                        return callback(new DatastoreError(createJSendServerError('Failed to open file', err)));
+                     }
 
-                                      fs.close(info.fd,
-                                               function(err) {
-                                                  if (err) {
-                                                     return callback(new DatastoreError(createJSendServerError('Failed to close file', err)));
-                                                  }
+                     fs.writeFile(tmpFilePath,
+                                  JSON.stringify(data),
+                                  function(err) {
+                                     if (err) {
+                                        return callback(new DatastoreError(createJSendServerError('Failed to write file', err)));
+                                     }
 
-                                                  var parameters = [userId,
-                                                                    deviceName,
-                                                                    "--format",
-                                                                    "json",
-                                                                    info.path];
+                                     fs.close(tempFileDescriptor,
+                                              function(err) {
+                                                 if (err) {
+                                                    return callback(new DatastoreError(createJSendServerError('Failed to close file', err)));
+                                                 }
 
-                                                  executeCommand("import",
-                                                                 parameters,
-                                                                 function(err, stdout) {
+                                                 var parameters = [userId,
+                                                                   deviceName,
+                                                                   "--format",
+                                                                   "json",
+                                                                   tmpFilePath];
 
-                                                                    if (err) {
-                                                                       return callback(new DatastoreError(createJSendServerError('Failed to execute datastore import command', err)));
-                                                                    }
+                                                 executeCommand("import",
+                                                                parameters,
+                                                                function(err, stdout) {
 
-                                                                    var datastoreResponse = null;
+                                                                   if (err) {
+                                                                      return callback(new DatastoreError(createJSendServerError('Failed to execute datastore import command', err)));
+                                                                   }
 
-                                                                    try {
-                                                                       datastoreResponse = JSON.parse(stdout);
-                                                                    }
-                                                                    catch (e) {
-                                                                       datastoreResponse = null;
-                                                                    }
+                                                                   var datastoreResponse = null;
 
-                                                                    var wasSuccessful = datastoreResponse != null &&
-                                                                                        typeof datastoreResponse['failed_records'] !== 'undefined' &&
-                                                                                        datastoreResponse['failed_records'] == 0 &&
-                                                                                        typeof datastoreResponse['successful_records'] !== 'undefined' &&
-                                                                                        datastoreResponse['successful_records'] > 0;
+                                                                   try {
+                                                                      datastoreResponse = JSON.parse(stdout);
+                                                                   }
+                                                                   catch (e) {
+                                                                      datastoreResponse = null;
+                                                                   }
 
-                                                                    if (wasSuccessful) {
-                                                                       return callback(null, datastoreResponse);
-                                                                    }
+                                                                   var wasSuccessful = datastoreResponse != null &&
+                                                                                       typeof datastoreResponse['failed_records'] !== 'undefined' &&
+                                                                                       datastoreResponse['failed_records'] == 0 &&
+                                                                                       typeof datastoreResponse['successful_records'] !== 'undefined' &&
+                                                                                       datastoreResponse['successful_records'] > 0;
 
-                                                                    return callback(new DatastoreError(createJSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
+                                                                   if (wasSuccessful) {
+                                                                      return callback(null, datastoreResponse);
+                                                                   }
 
-                                                                 });
-                                               });
-                                   });
-                   });
+                                                                   return callback(new DatastoreError(createJSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
+
+                                                                });
+                                              });
+                                  });
+                  });
       }
    };
 }

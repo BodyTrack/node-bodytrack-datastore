@@ -593,12 +593,12 @@ function BodyTrackDatastore(config) {
 
          // create a temp file to write the uploaded data so the datastore can import it
          tmp.file({ prefix : 'node_bodytrack_datastore_json_data_to_import_', postfix : '.json' },
-                  function(err, tmpFilePath, tempFileDescriptor) {
+                  function(err, tempFilePath, tempFileDescriptor, tempFileCleanupCallback) {
                      if (err) {
                         return callback(new DatastoreError(createJSendServerError('Failed to open file', err)));
                      }
 
-                     fs.writeFile(tmpFilePath,
+                     fs.writeFile(tempFilePath,
                                   JSON.stringify(data),
                                   function(err) {
                                      if (err) {
@@ -615,11 +615,18 @@ function BodyTrackDatastore(config) {
                                                                    deviceName,
                                                                    "--format",
                                                                    "json",
-                                                                   tmpFilePath];
+                                                                   tempFilePath];
 
                                                  executeCommand("import",
                                                                 parameters,
                                                                 function(err, stdout) {
+
+                                                                   try {
+                                                                      tempFileCleanupCallback();
+                                                                   }
+                                                                   catch (e) {
+                                                                      log.error("Error trying to cleanup the temp file [" + tempFilePath + "]");
+                                                                   }
 
                                                                    if (err) {
                                                                       return callback(new DatastoreError(createJSendServerError('Failed to execute datastore import command', err)));

@@ -1,10 +1,18 @@
-{"channel_specs" : {
-   "speck2.particles" : {
-      "channel_bounds" : {
-         "max_time" : 1383774017,
-         "max_value" : 86,
-         "min_time" : 1383774015,
-         "min_value" : 86
+{
+   "channel_specs" : {
+      "speck2.particles" : {
+         "channel_bounds" : {
+            "max_time" : 1383774017,
+            "max_value" : 86,
+            "min_time" : 1383774015,
+            "min_value" : 86
+         },
+         "most_recent_data_sample" : {
+            "time" : 1383774017,
+            "value" : 86
+         }
       }
-   }
-}, "max_time" : 1383774017, "min_time" : 1383774015}
+   },
+   "max_time" : 1383774017,
+   "min_time" : 1383774015
+}

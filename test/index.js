@@ -36,8 +36,14 @@ var multipleValidData = require('./data/multiple_valid.json');
 var validInfoAllDevices = require('./data/valid_info_all_devices.json');
 var validInfoSpeck1Device = require('./data/valid_info_speck1_device.json');
 var validInfoSpeck2Device = require('./data/valid_info_speck2_device.json');
+var validInfoSpeck2DeviceWithFilteredTime = require('./data/valid_info_speck2_device_with_filtered_time.json');
 var validInfoSpeck1DeviceHumidityChannel = require('./data/valid_info_speck1_device_humidity_channel.json');
 var validInfoSpeck2DeviceParticlesChannel = require('./data/valid_info_speck2_device_particles_channel.json');
+var validInfoAllDevicesWithMostRecent = require('./data/valid_info_all_devices_with_most_recent.json');
+var validInfoSpeck1DeviceWithMostRecent = require('./data/valid_info_speck1_device_with_most_recent.json');
+var validInfoSpeck2DeviceWithMostRecent = require('./data/valid_info_speck2_device_with_most_recent.json');
+var validInfoSpeck1DeviceHumidityChannelWithMostRecent = require('./data/valid_info_speck1_device_humidity_channel_with_most_recent.json');
+var validInfoSpeck2DeviceParticlesChannelWithMostRecent = require('./data/valid_info_speck2_device_particles_channel_with_most_recent.json');
 var gettile_neg3_21630549 = require('./data/gettile_-3_21630549.json');
 var gettile_neg9_1384355148 = require('./data/gettile_-9_1384355148.json');
 
@@ -416,14 +422,39 @@ describe("The test datastore data directory", function() {
                      verifySuccess(err, info, validInfoAllDevices, done);
                   });
                });
+               it('should return proper channel specs for known user ID for all devices (with most recent data samples)', function(done) {
+                  datastore.getInfo({ userId : 1 , willFindMostRecentSample: true}, function(err, info) {
+                     verifySuccess(err, info, validInfoAllDevicesWithMostRecent, done);
+                  });
+               });
                it('should return proper channel specs for known user ID for speck1 device', function(done) {
                   datastore.getInfo({ userId : 1, deviceName : "speck1" }, function(err, info) {
                      verifySuccess(err, info, validInfoSpeck1Device, done);
                   });
                });
+               it('should return proper channel specs for known user ID for speck1 device (with most recent data samples)', function(done) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck1" , willFindMostRecentSample: true}, function(err, info) {
+                     verifySuccess(err, info, validInfoSpeck1DeviceWithMostRecent, done);
+                  });
+               });
                it('should return proper channel specs for known user ID for speck2 device', function(done) {
                   datastore.getInfo({ userId : 1, deviceName : "speck2" }, function(err, info) {
                      verifySuccess(err, info, validInfoSpeck2Device, done);
+                  });
+               });
+               it('should return proper channel specs for known user ID for speck2 device (with most recent data samples)', function(done) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck2" , willFindMostRecentSample: true}, function(err, info) {
+                     verifySuccess(err, info, validInfoSpeck2DeviceWithMostRecent, done);
+                  });
+               });
+               it('should return proper channel specs for known user ID for speck2 device with min and max time specified', function(done) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck2" , minTime: 1383774015.5, maxTime : 1383774018}, function(err, info) {
+                     verifySuccess(err, info, validInfoSpeck2DeviceWithFilteredTime, done);
+                  });
+               });
+               it('should return proper channel specs for known user ID for speck2 device with min and max time specified (with most recent data samples requested, but ignored)', function(done) {
+                  datastore.getInfo({ userId : 1, deviceName : "speck2" , minTime: 1383774015.5, maxTime : 1383774018, willFindMostRecentSample: true}, function(err, info) {
+                     verifySuccess(err, info, validInfoSpeck2DeviceWithFilteredTime, done);
                   });
                });
                it('should return proper channel specs for known user ID for speck1 device and humidity channel', function(done) {
@@ -435,6 +466,16 @@ describe("The test datastore data directory", function() {
                      verifySuccess(err, info, validInfoSpeck1DeviceHumidityChannel, done);
                   });
                });
+               it('should return proper channel specs for known user ID for speck1 device and humidity channel (with most recent data samples)', function(done) {
+                  datastore.getInfo({
+                                       userId : 1,
+                                       deviceName : "speck1",
+                                       channelName : "humidity",
+                                       willFindMostRecentSample: true
+                                    }, function(err, info) {
+                     verifySuccess(err, info, validInfoSpeck1DeviceHumidityChannelWithMostRecent, done);
+                  });
+               });
                it('should return proper channel specs for known user ID for speck2 device and particles channel', function(done) {
                   datastore.getInfo({
                                        userId : 1,
@@ -442,6 +483,16 @@ describe("The test datastore data directory", function() {
                                        channelName : "particles"
                                     }, function(err, info) {
                      verifySuccess(err, info, validInfoSpeck2DeviceParticlesChannel, done);
+                  });
+               });
+               it('should return proper channel specs for known user ID for speck2 device and particles channel (with most recent data samples)', function(done) {
+                  datastore.getInfo({
+                                       userId : 1,
+                                       deviceName : "speck2",
+                                       channelName : "particles",
+                                       willFindMostRecentSample: true
+                                    }, function(err, info) {
+                     verifySuccess(err, info, validInfoSpeck2DeviceParticlesChannelWithMostRecent, done);
                   });
                });
                it('should return empty channel specs for unknown user ID', function(done) {

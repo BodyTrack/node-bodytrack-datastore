@@ -6,6 +6,10 @@
             "max_value" : 24,
             "min_time" : 1384355103,
             "min_value" : 20
+         },
+         "most_recent_data_sample" : {
+            "time" : 1384355179,
+            "value" : 22
          }
       }
    },

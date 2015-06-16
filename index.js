@@ -186,19 +186,29 @@ function BodyTrackDatastore(config) {
    /**
     * <p>
     * Produces the "channel_specs" JSON either for all devices and channels, for all channels within a single device,
-    * or for only the specified device and channel.  Min and/or max time may be optionally specified as well. Produced
-    * channel specs are returned to the caller by calling the <code>callback</code> function.
+    * or for only the specified device and channel.  Min and/or max time may be optionally specified as well. Will
+    * attempt to compute the most recent data sample if <code>willFindMostRecentSample</code> is <code>true</code>
+    * and the time range is not filtered with <code>minTime</code> and/or <code>maxTime</code>. Produced channel specs
+    * are returned to the caller by calling the <code>callback</code> function.
     * </p>
     * <p>
-    * To filter the info, the given <code>filter</code> object must at least contain a <code>userId</code> field. The
-    * optional fields are:
+    * The given <code>options</code> object must at least contain a <code>userId</code> field. The optional fields are:
     * <ul>
     *    <li><code>deviceName</code></li>
     *    <li><code>channelName</code></li>
     *    <li><code>minTime</code></li>
     *    <li><code>maxTime</code></li>
+    *    <li><code>willFindMostRecentSample</code></li>
     * </ul>
-    * The <code>channelName</code> will only be considered if the <code>deviceName</code> is specified.
+    * Notes:
+    * <ul>
+    *    <li>The <code>channelName</code> will only be considered if the <code>deviceName</code> is specified.</li>
+    *    <li>The <code>willFindMostRecentSample</code> option defaults to <code>false</code></li>
+    *    <li>
+    *       The <code>willFindMostRecentSample</code> will be ignored (and treated as <code>false</code>) if
+    *       the time is filtered with <code>minTime</code> and/or <code>maxTime</code>.
+    *    </li>
+    * </ul>
     * </p>
     * <p>
     * The callback is called with a <code>DatastoreError</code> if:
@@ -214,15 +224,15 @@ function BodyTrackDatastore(config) {
     * with more details about the error.
     * </p>
     *
-    * @param {object} filter Object containing the various filter parameters
+    * @param {object} options Object containing the various option parameters
     * @param {function} callback - callback function with the signature <code>callback(err, info)</code>
     * @throws an <code>Error</code> if the method is called with fewer than 2 arguments
     */
-   this.getInfo = function(filter, callback) {
+   this.getInfo = function(options, callback) {
       // make sure they at least specified the userId
-      if (filter.hasOwnProperty('userId')) {
+      if (options.hasOwnProperty('userId')) {
 
-         var userId = filter['userId'];
+         var userId = options['userId'];
 
          // make sure the userId is valid
          if (!isUserIdValid(userId)) {
@@ -232,9 +242,16 @@ function BodyTrackDatastore(config) {
 
          var parameters = ["-r", userId];
 
+         // see whether the caller specified the flag to find the most recent data sample
+         if (options.hasOwnProperty('willFindMostRecentSample')) {
+            if (!!options['willFindMostRecentSample']) {
+               parameters.push("--find-most-recent");
+            }
+         }
+
          // see whether deviceName is specified
-         if (filter.hasOwnProperty('deviceName') && filter['deviceName'] != null) {
-            var deviceName = filter['deviceName'];
+         if (options.hasOwnProperty('deviceName') && options['deviceName'] != null) {
+            var deviceName = options['deviceName'];
 
             // make sure the deviceName is valid
             if (!BodyTrackDatastore.isValidKey(deviceName)) {
@@ -243,8 +260,8 @@ function BodyTrackDatastore(config) {
             }
 
             // see whether channelName is specified
-            if (filter.hasOwnProperty('channelName') && filter['channelName'] != null) {
-               var channelName = filter['channelName'];
+            if (options.hasOwnProperty('channelName') && options['channelName'] != null) {
+               var channelName = options['channelName'];
 
                // make sure the channelName is valid
                if (!BodyTrackDatastore.isValidKey(channelName)) {
@@ -268,8 +285,8 @@ function BodyTrackDatastore(config) {
          // Now that device and channel have been handled, check for filtering by min/max time...
 
          // see whether the caller specified the min time
-         if (filter.hasOwnProperty('minTime') && filter['minTime'] != null) {
-            var minTime = filter['minTime'];
+         if (options.hasOwnProperty('minTime') && options['minTime'] != null) {
+            var minTime = options['minTime'];
 
             // make sure the minTime is valid
             if (!util.isNumber(minTime)) {
@@ -281,8 +298,8 @@ function BodyTrackDatastore(config) {
          }
 
          // see whether the caller specified the max time
-         if (filter.hasOwnProperty('maxTime') && filter['maxTime'] != null) {
-            var maxTime = filter['maxTime'];
+         if (options.hasOwnProperty('maxTime') && options['maxTime'] != null) {
+            var maxTime = options['maxTime'];
 
             // make sure the maxTime is valid
             if (!util.isNumber(maxTime)) {

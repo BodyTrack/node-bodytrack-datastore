@@ -33,7 +33,6 @@
   },
   "dependencies": {
     "http-status": "^0.1.8",
-    "log4js": "^0.6.21",
-    "tmp": "0.0.24"
+    "log4js": "^0.6.21"
   }
 }

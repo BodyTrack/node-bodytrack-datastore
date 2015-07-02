@@ -607,81 +607,100 @@ function BodyTrackDatastore(config) {
 
          // create a temp file to write the uploaded data so the datastore can import it
          TempFile.create({ prefix : 'node_bodytrack_datastore_json_data_to_import_', suffix : '.json' },
-               function(err, tempFile) {
-                  if (err) {
-                     return callback(new DatastoreError(createJSendServerError('Failed to open temp file', err)));
+               function(createTempFileErr, tempFile) {
+                  if (createTempFileErr) {
+                     return callback(new DatastoreError(createJSendServerError('Upload failed due to an error trying to open the temp file')));
                   }
 
                   fs.writeFile(tempFile.path,
                                JSON.stringify(data),
-                               function(err) {
-                                  if (err) {
-                                     try {
-                                        tempFile.cleanup();
+                               function(writeToTempFileErr) {
+
+                                  // try closing the file, regardless of whether the write actually succeeded.  We'll
+                                  // verify write success later
+                                  fs.close(tempFile.fd, function(closeTempFileErr) {
+                                     if (closeTempFileErr) {
+                                        log.error("Error trying to close the temp file [" + tempFile.path + "]: " + closeTempFileErr);
+
+                                        // we couldn't close the file, so it's doubtful that cleaning up will work, but
+                                        // give it a try anyway...
+                                        try {
+                                           tempFile.cleanup();
+                                        }
+                                        catch (e) {
+                                           log.error("Error trying to cleanup the temp file after failing to close it [" + tempFile.path + "]: " + e);
+                                        }
+
+                                        return callback(new DatastoreError(createJSendServerError('Upload failed due to an error trying to close the temp file')));
                                      }
-                                     catch (e) {
-                                        log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
+
+                                     // The file should be closed now, so see whether we actually successfully wrote to
+                                     // the file.  If not, remove it, and abort.
+                                     if (writeToTempFileErr) {
+                                        log.error("Error trying to write to the temp file [" + tempFile.path + "]: " + writeToTempFileErr);
+
+                                        try {
+                                           tempFile.cleanup();
+                                        }
+                                        catch (e) {
+                                           log.error("Error trying to cleanup the temp file after failing to write to it [" + tempFile.path + "]: " + e);
+                                        }
+
+                                        return callback(new DatastoreError(createJSendServerError('Failed to write to temp file', err)));
                                      }
-                                     return callback(new DatastoreError(createJSendServerError('Failed to write to temp file', err)));
-                                  }
+                                     else {
 
-                                  fs.close(tempFile.fd,
-                                           function(err) {
-                                              if (err) {
-                                                 try {
-                                                    tempFile.cleanup();
-                                                 }
-                                                 catch (e) {
-                                                    log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
-                                                 }
-                                                 return callback(new DatastoreError(createJSendServerError('Failed to close temp file', err)));
-                                              }
+                                        // we successfully wrote to the file, and successfully closed it, so we're good
+                                        // to go and ready to pass off to the datastore.  Start by creating the params
+                                        // for the import command
+                                        var parameters = [userId,
+                                                          deviceName,
+                                                          "--format",
+                                                          "json",
+                                                          tempFile.path];
 
-                                              var parameters = [userId,
-                                                                deviceName,
-                                                                "--format",
-                                                                "json",
-                                                                tempFile.path];
+                                        executeCommand("import",
+                                                       parameters,
+                                                       function(importError, stdout) {
 
-                                              executeCommand("import",
-                                                             parameters,
-                                                             function(err, stdout) {
+                                                          // we're done with the temp file now, so clean it up before doing anything else
+                                                          try {
+                                                             tempFile.cleanup();
+                                                          }
+                                                          catch (e) {
+                                                             log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
+                                                          }
 
-                                                                // we're done with the temp file now, so clean it up before doing anything else
-                                                                try {
-                                                                   tempFile.cleanup();
-                                                                }
-                                                                catch (e) {
-                                                                   log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
-                                                                }
+                                                          if (importError) {
+                                                             return callback(new DatastoreError(createJSendServerError('Failed to execute datastore import command', importError)));
+                                                          }
 
-                                                                if (err) {
-                                                                   return callback(new DatastoreError(createJSendServerError('Failed to execute datastore import command', err)));
-                                                                }
+                                                          var datastoreResponse = null;
 
-                                                                var datastoreResponse = null;
+                                                          try {
+                                                             datastoreResponse = JSON.parse(stdout);
+                                                          }
+                                                          catch (e) {
+                                                             datastoreResponse = null;
+                                                          }
 
-                                                                try {
-                                                                   datastoreResponse = JSON.parse(stdout);
-                                                                }
-                                                                catch (e) {
-                                                                   datastoreResponse = null;
-                                                                }
+                                                          var wasSuccessful = datastoreResponse != null &&
+                                                                              typeof datastoreResponse['failed_records'] !== 'undefined' &&
+                                                                              datastoreResponse['failed_records'] == 0 &&
+                                                                              typeof datastoreResponse['successful_records'] !== 'undefined' &&
+                                                                              datastoreResponse['successful_records'] > 0;
 
-                                                                var wasSuccessful = datastoreResponse != null &&
-                                                                                    typeof datastoreResponse['failed_records'] !== 'undefined' &&
-                                                                                    datastoreResponse['failed_records'] == 0 &&
-                                                                                    typeof datastoreResponse['successful_records'] !== 'undefined' &&
-                                                                                    datastoreResponse['successful_records'] > 0;
+                                                          if (wasSuccessful) {
+                                                             return callback(null, datastoreResponse);
+                                                          }
 
-                                                                if (wasSuccessful) {
-                                                                   return callback(null, datastoreResponse);
-                                                                }
+                                                          return callback(new DatastoreError(createJSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
 
-                                                                return callback(new DatastoreError(createJSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
+                                                       });
 
-                                                             });
-                                           });
+
+                                     }
+                                  });
                                });
                });
       }

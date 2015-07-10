@@ -1,4 +1,4 @@
-var exec = require('child_process').exec;
+var execFile = require('child_process').execFile;
 var spawn = require('child_process').spawn;
 var fs = require('fs');
 var path = require('path');
@@ -49,29 +49,18 @@ function BodyTrackDatastore(config) {
    var binDir = path.join(util.isDefined(config) ? config.binDir : '', '.');
    var dataDir = path.join(util.isDefined(config) ? config.dataDir : '', '.');
 
-   var buildCommand = function(command, parameters) {
-      // surround the command and data directory with single quotes to deal with paths containing spaces
-      var launchCommand = "'" + path.join(binDir, command, '.') + "' '" + dataDir + "'";
-      parameters = parameters || [];
-      for (var i = 0; i < parameters.length; i++) {
-         var param = parameters[i];
-         launchCommand += ' ';
-         var part = (param == null ? 'null' : param.toString());
-         if (part.indexOf(' ') < 0) {
-            launchCommand += part;
-         }
-         else {
-            launchCommand += "\"" + part + "\"";
-         }
-      }
-
-      return launchCommand;
+   var convertNullToString = function(val) {
+      return val == null ? 'null' : val;
    };
 
    var executeCommand = function(commandName, parameters, callback) {
-      var command = buildCommand(commandName, parameters);
-      log.debug("executing command: " + command);
-      exec(command, callback);
+      var executable = path.join(binDir, commandName, '.');
+
+      parameters = parameters || [];
+      parameters.unshift(dataDir);
+      var cleanParams = parameters.map(convertNullToString);
+
+      execFile(executable, cleanParams, callback);
    };
 
    var isUserIdValid = function(userId) {
@@ -697,7 +686,6 @@ function BodyTrackDatastore(config) {
                                                           return callback(new DatastoreError(createJSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
 
                                                        });
-
 
                                      }
                                   });

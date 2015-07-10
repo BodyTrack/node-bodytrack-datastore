@@ -25,11 +25,11 @@
   },
   "homepage": "https://github.com/BodyTrack/node-bodytrack-datastore",
   "devDependencies": {
-    "chai": "^1.10.0",
-    "jsdoc": "^3.3.0-alpha10",
-    "mocha": "^2.0.1",
-    "rimraf": "^2.2.8",
-    "should": "^4.3.0"
+    "chai": "^3.0.0",
+    "jsdoc": "^3.3.2",
+    "mocha": "^2.2.5",
+    "rimraf": "^2.4.1",
+    "should": "^7.0.2"
   },
   "dependencies": {
     "http-status": "^0.1.8",

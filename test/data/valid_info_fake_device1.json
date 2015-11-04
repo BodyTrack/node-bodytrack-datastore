@@ -1,0 +1,20 @@
+{
+   "channel_specs": {
+      "fake.bar": {
+         "channel_bounds": {
+            "max_time": 1441856363,
+            "min_time": 1441856363
+         }
+      },
+      "fake.foo": {
+         "channel_bounds": {
+            "max_time": 1441856362,
+            "max_value": 42,
+            "min_time": 1441856362,
+            "min_value": 42
+         }
+      }
+   },
+   "max_time": 1441856363,
+   "min_time": 1441856362
+}

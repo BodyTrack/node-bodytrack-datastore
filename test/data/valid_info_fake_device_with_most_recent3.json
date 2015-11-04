@@ -1,0 +1,32 @@
+{
+   "channel_specs" : {
+      "fake.bar" : {
+         "channel_bounds" : {
+            "max_time" : 1441856364,
+            "min_time" : 1441856363
+         },
+         "most_recent_string_sample" : {
+            "time" : 1441856364,
+            "value" : "This is the last comment."
+         }
+      },
+      "fake.foo" : {
+         "channel_bounds" : {
+            "max_time" : 1441856364,
+            "max_value" : 100,
+            "min_time" : 1441856362,
+            "min_value" : 42
+         },
+         "most_recent_data_sample" : {
+            "time" : 1441856364,
+            "value" : 100
+         },
+         "most_recent_string_sample" : {
+            "time" : 1441856364,
+            "value" : "This is a comment for the foo channel at time 1441856364."
+         }
+      }
+   },
+   "max_time" : 1441856364,
+   "min_time" : 1441856362
+}

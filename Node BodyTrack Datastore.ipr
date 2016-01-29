@@ -61,7 +61,7 @@
   </component>
   <component name="JavaScriptLibraryMappings">
     <file url="file://$PROJECT_DIR$" libraries="{Node BodyTrack Datastore node_modules}" />
-    <file url="PROJECT" libraries="{Node BodyTrack Datastore node_modules, chai-DefinitelyTyped, mocha-DefinitelyTyped, should-DefinitelyTyped}" />
+    <file url="PROJECT" libraries="{Node BodyTrack Datastore node_modules}" />
     <includedPredefinedLibrary name="Node.js Core" />
   </component>
   <component name="ProjectCodeStyleSettingsManager">

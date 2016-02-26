@@ -1,161 +1,168 @@
-var expect = require('chai').expect;
+var should = require('should');
 var util = require('../lib/util');
 
 describe("isDefined()", function() {
    it('should return false for null', function() {
-      expect(util.isDefined(null)).to.be.false;
+      util.isDefined(null).should.be.false();
    });
    it('should return false for undefined', function() {
-      expect(util.isDefined(undefined)).to.be.false;
+      util.isDefined(undefined).should.be.false();
    });
 
    it('should return true for something that is defined and non-null', function() {
-      expect(util.isDefined("foo")).to.be.true;
+      util.isDefined("foo").should.be.true();
    });
 });
 
 describe("isString()", function() {
    it('should return true for empty string', function() {
-      expect(util.isString('')).to.be.true;
+      util.isString('').should.be.true();
    });
    it('should return true for foo', function() {
-      expect(util.isString('foo')).to.be.true;
+      util.isString('foo').should.be.true();
    });
    it('should return true for new String()', function() {
-      expect(util.isString(new String())).to.be.true;
+      //noinspection JSPrimitiveTypeWrapperUsage
+      util.isString(new String()).should.be.true();
    });
    it('should return true for new String("")', function() {
-      expect(util.isString(new String(""))).to.be.true;
+      //noinspection JSPrimitiveTypeWrapperUsage
+      util.isString(new String("")).should.be.true();
    });
    it('should return true for new String("foo")', function() {
-      expect(util.isString(new String("foo"))).to.be.true;
+      //noinspection JSPrimitiveTypeWrapperUsage
+      util.isString(new String("foo")).should.be.true();
    });
 
    it('should return false for 1', function() {
-      expect(util.isString(1)).to.be.false;
+      util.isString(1).should.be.false();
    });
    it('should return false for {}', function() {
-      expect(util.isString({})).to.be.false;
+      util.isString({}).should.be.false();
    });
    it('should return false for []', function() {
-      expect(util.isString([])).to.be.false;
+      util.isString([]).should.be.false();
    });
    it('should return false for null', function() {
-      expect(util.isString(null)).to.be.false;
+      util.isString(null).should.be.false();
    });
    it('should return false for undefined', function() {
-      expect(util.isString(undefined)).to.be.false;
+      util.isString(undefined).should.be.false();
    });
    it('should return false for new Array()', function() {
-      expect(util.isString(new Array())).to.be.false;
+      //noinspection JSPrimitiveTypeWrapperUsage
+      util.isString(new Array()).should.be.false();
    });
    it('should return false for new Object()', function() {
-      expect(util.isString(new Object())).to.be.false;
+      //noinspection JSPrimitiveTypeWrapperUsage,JSClosureCompilerSyntax
+      util.isString(new Object()).should.be.false();
    });
    it('should return false for true', function() {
-      expect(util.isString(true)).to.be.false;
+      util.isString(true).should.be.false();
    });
    it('should return false for false', function() {
-      expect(util.isString(false)).to.be.false;
+      util.isString(false).should.be.false();
    });
 });
 
 describe("isInt()", function() {
    it('should return false for undefined', function() {
-      expect(util.isInt(undefined)).to.be.false;
+      util.isInt(undefined).should.be.false();
    });
    it('should return false for null', function() {
-      expect(util.isInt(null)).to.be.false;
+      util.isInt(null).should.be.false();
    });
    it('should return false for the empty string', function() {
-      expect(util.isInt('')).to.be.false;
+      util.isInt('').should.be.false();
    });
    it('should return false for "foo"', function() {
-      expect(util.isInt("foo")).to.be.false;
+      util.isInt("foo").should.be.false();
    });
    it('should return false for 0.2', function() {
-      expect(util.isInt(0.2)).to.be.false;
+      util.isInt(0.2).should.be.false();
    });
    it('should return false for 14.3', function() {
-      expect(util.isInt(14.3)).to.be.false;
+      util.isInt(14.3).should.be.false();
    });
    it('should return false for 0.7', function() {
-      expect(util.isInt(0.7)).to.be.false;
+      util.isInt(0.7).should.be.false();
    });
    it('should return false for "9,999"', function() {
-      expect(util.isInt("9,999")).to.be.false;
+      util.isInt("9,999").should.be.false();
    });
    it('should return false for "0x45"', function() {
-      expect(util.isInt("0x45")).to.be.false;
+      util.isInt("0x45").should.be.false();
    });
    it('should return false for "1E3"', function() {
-      expect(util.isInt("1E3")).to.be.false;
+      util.isInt("1E3").should.be.false();
    });
    it('should return false for "1.000000000000000000001"', function() {
-      expect(util.isInt("1.000000000000000000001")).to.be.false;
+      util.isInt("1.000000000000000000001").should.be.false();
    });
    it('should return false for "-1.000000000000000000001"', function() {
-      expect(util.isInt("-1.000000000000000000001")).to.be.false;
+      util.isInt("-1.000000000000000000001").should.be.false();
    });
 
    it('should return true for 0', function() {
-      expect(util.isInt(0)).to.be.true;
+      util.isInt(0).should.be.true();
    });
    it('should return true for "0"', function() {
-      expect(util.isInt("0")).to.be.true;
+      util.isInt("0").should.be.true();
    });
    it('should return true for 1', function() {
-      expect(util.isInt(1)).to.be.true;
+      util.isInt(1).should.be.true();
    });
    it('should return true for "1"', function() {
-      expect(util.isInt("1")).to.be.true;
+      util.isInt("1").should.be.true();
    });
    it('should return true for 11', function() {
-      expect(util.isInt(11)).to.be.true;
+      util.isInt(11).should.be.true();
    });
    it('should return true for "11"', function() {
-      expect(util.isInt("11")).to.be.true;
+      util.isInt("11").should.be.true();
    });
    it('should return true for 343', function() {
-      expect(util.isInt(343)).to.be.true;
+      util.isInt(343).should.be.true();
    });
    it('should return true for "343"', function() {
-      expect(util.isInt("343")).to.be.true;
+      util.isInt("343").should.be.true();
    });
    it('should return true for 0000349', function() {
-      expect(util.isInt(0000349)).to.be.true;
+      //noinspection OctalIntegerJS
+      util.isInt(0000349).should.be.true();
    });
    it('should return true for "0000349"', function() {
-      expect(util.isInt("0000349")).to.be.true;
+      util.isInt("0000349").should.be.true();
    });
    it('should return true for 1.000000000000000000001', function() {
-      expect(util.isInt(1.000000000000000000001)).to.be.true;
+      util.isInt(1.000000000000000000001).should.be.true();
    });
    it('should return true for -1', function() {
-      expect(util.isInt(-1)).to.be.true;
+      util.isInt(-1).should.be.true();
    });
    it('should return true for "-1"', function() {
-      expect(util.isInt("-1")).to.be.true;
+      util.isInt("-1").should.be.true();
    });
    it('should return true for -11', function() {
-      expect(util.isInt(-11)).to.be.true;
+      util.isInt(-11).should.be.true();
    });
    it('should return true for "-11"', function() {
-      expect(util.isInt("-11")).to.be.true;
+      util.isInt("-11").should.be.true();
    });
    it('should return true for -343', function() {
-      expect(util.isInt(-343)).to.be.true;
+      util.isInt(-343).should.be.true();
    });
    it('should return true for "-343"', function() {
-      expect(util.isInt("-343")).to.be.true;
+      util.isInt("-343").should.be.true();
    });
    it('should return true for -0000349', function() {
-      expect(util.isInt(-0000349)).to.be.true;
+      //noinspection OctalIntegerJS
+      util.isInt(-0000349).should.be.true();
    });
    it('should return true for "-0000349"', function() {
-      expect(util.isInt("-0000349")).to.be.true;
+      util.isInt("-0000349").should.be.true();
    });
    it('should return true for -1.000000000000000000001', function() {
-      expect(util.isInt(-1.000000000000000000001)).to.be.true;
+      util.isInt(-1.000000000000000000001).should.be.true();
    });
 });

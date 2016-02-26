@@ -64,7 +64,7 @@ function BodyTrackDatastore(config) {
    };
 
    var isUserIdValid = function(userId) {
-      return util.isInt(userId);
+      return util.isPositiveInt(userId);
    };
 
    var validateUserIdDeviceChannelObjects = function(userIdDeviceChannelObjects, callback) {
@@ -225,7 +225,7 @@ function BodyTrackDatastore(config) {
 
          // make sure the userId is valid
          if (!isUserIdValid(userId)) {
-            var msg = "User ID must be an integer";
+            var msg = " User ID must be a positive integer";
             return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
          }
 
@@ -441,7 +441,7 @@ function BodyTrackDatastore(config) {
       if (typeof callback === 'function') {
          // validate inputs
          if (!isUserIdValid(userId)) {
-            var msg = "User ID must be an integer";
+            var msg = " User ID must be a positive integer";
             return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
          }
          if (!util.isInt(level)) {
@@ -582,7 +582,7 @@ function BodyTrackDatastore(config) {
 
       if (typeof callback === 'function') {
          if (!isUserIdValid(userId)) {
-            var msg = "User ID must be an integer";
+            var msg = " User ID must be a positive integer";
             return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
          }
          if (!BodyTrackDatastore.isValidKey(deviceName)) {

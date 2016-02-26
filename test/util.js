@@ -273,4 +273,19 @@ describe("isPositiveInt()", function() {
       done();
    });
 
+   it("should return false for '*'", function(done) {
+      util.isPositiveInt('*').should.be.false();
+      done();
+   });
+
+   it("should return false for  '..'", function(done) {
+      util.isPositiveInt('..').should.be.false();
+      done();
+   });
+
+   it("should return false for  '/'", function(done) {
+      util.isPositiveInt('/').should.be.false();
+      done();
+   });
+
 });   // End isPositiveInt()

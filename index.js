@@ -8,6 +8,7 @@ var DatastoreError = require('./lib/errors').DatastoreError;
 var createJSendClientValidationError = require('./lib/jsend').createJSendClientValidationError;
 var createJSendServerError = require('./lib/jsend').createJSendServerError;
 var log = require('log4js').getLogger("bodytrack-datastore");
+var rimraf = require('rimraf');
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];
 const VALID_KEY_CHARACTERS_PATTERN = /^[a-zA-Z0-9_\.\-]+$/;
@@ -691,6 +692,51 @@ function BodyTrackDatastore(config) {
                                   });
                                });
                });
+      }
+   };
+
+   /**
+    * <p>
+    *    Deletes the device specified by the given <code>deviceName</code> belonging to the user specified by the given
+    *    <code>userId</code>.
+    * </p>
+    * <p>
+    *    Note that there is only at most one argument ever given to the <code>callback</code>.  That argument will be
+    *    an <code>Error</code> instance if an error occurred and <code>null</code> otherwise.  A <code>null</code>
+    *    error does not necessarily mean that the device was deleted, however, because the <code>userId</code> and/or
+    *    <code>deviceName</code> may have been syntactically valid, but not denote any actual entity.
+    * </p>
+    *
+    * @param {int|String} userId - the user ID
+    * @param {string} deviceName - the device name
+    * @param {function} callback - callback function with the signature <code>callback(err)</code>
+    */
+   this.deleteDevice = function(userId, deviceName, callback) {
+      // make sure the userId is a string
+      userId = String(userId);
+
+      if (typeof callback === 'function') {
+         if (!isUserIdValid(userId)) {
+            var msg = " User ID must be a positive integer";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
+         }
+         if (!BodyTrackDatastore.isValidKey(deviceName)) {
+            var msg = "Invalid device name";
+            return callback(new DatastoreError(createJSendClientValidationError(msg, { deviceName : msg })));
+         }
+
+         var deviceDirectoryPath = path.join(dataDir, userId, deviceName);
+         log.debug("Attempting to delete device at path [" + deviceDirectoryPath + "]");
+
+         rimraf(deviceDirectoryPath, { glob : false }, function(err) {
+            if (err) {
+               log.error("Failed to delete device directory [" + deviceDirectoryPath + "]");
+               callback(err);
+            }
+            else {
+               callback(null);
+            }
+         });
       }
    };
 }

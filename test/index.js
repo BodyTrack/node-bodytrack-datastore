@@ -1,5 +1,6 @@
 var config = require('./config');
 var fs = require('fs');
+var path = require('path');
 var expect = require('chai').expect;
 var should = require('should');
 var BodyTrackDatastore = require('../index');
@@ -319,7 +320,7 @@ describe("The test datastore data directory", function() {
                      // TODO: Known bugs: deletes from the datastore currently (2014-12-01) don't update the min/max
                      // time or min/max values.  Once that's fixed, we'll need to update this test.
 
-                     verifyImportSuccess(2, err, response, "speck1", 1,
+                     verifyImportSuccess(                                                   2,                                                 err, response, "speck1",                        1,
                                          { min_time : 1384357121, max_time : 1384357125 },  // see "Known bugs" above
                                          { min_time : 1384357121, max_time : 1384357125 },  // see "Known bugs" above
                                          function() {
@@ -554,8 +555,11 @@ describe("The test datastore data directory", function() {
                               return done(err);
                            }
                            else {
-                              verifySuccess(err, info, validInfoFakeDevice2, function(){
-                                 datastore.getInfo({ userId : 4, willFindMostRecentSample : true }, function(err, info) {
+                              verifySuccess(err, info, validInfoFakeDevice2, function() {
+                                 datastore.getInfo({
+                                                      userId : 4,
+                                                      willFindMostRecentSample : true
+                                                   }, function(err, info) {
                                     verifySuccess(err, info, validInfoFakeDeviceWithMostRecent2, done);
                                  });
                               });
@@ -575,8 +579,11 @@ describe("The test datastore data directory", function() {
                               return done(err);
                            }
                            else {
-                              verifySuccess(err, info, validInfoFakeDevice3, function(){
-                                 datastore.getInfo({ userId : 4, willFindMostRecentSample : true }, function(err, info) {
+                              verifySuccess(err, info, validInfoFakeDevice3, function() {
+                                 datastore.getInfo({
+                                                      userId : 4,
+                                                      willFindMostRecentSample : true
+                                                   }, function(err, info) {
                                     verifySuccess(err, info, validInfoFakeDeviceWithMostRecent3, done);
                                  });
                               });
@@ -1389,10 +1396,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.humidity,3.speck.particles,3.speck.raw_particles,3.speck.annotation\n" +
-                                                               "1384357121,24,13,1,\n" +
-                                                               "1384357122,25,14,2,\n" +
-                                                               "1384357123,26,15,3,\"This is the middle data sample\"\n" +
-                                                               "1384357124,27,16,4,\n" +
+                                                               "1384357121,24,13,1,\n"                                                                   +
+                                                               "1384357122,25,14,2,\n"                                                                   +
+                                                               "1384357123,26,15,3,\"This is the middle data sample\"\n"                                 +
+                                                               "1384357124,27,16,4,\n"                                                                   +
                                                                "1384357125,28,17,5,\n",
                                                                done);
                                        });
@@ -1412,10 +1419,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles\n" +
-                                                               "1384357121,13\n" +
-                                                               "1384357122,14\n" +
-                                                               "1384357123,15\n" +
-                                                               "1384357124,16\n" +
+                                                               "1384357121,13\n"               +
+                                                               "1384357122,14\n"               +
+                                                               "1384357123,15\n"               +
+                                                               "1384357124,16\n"               +
                                                                "1384357125,17\n",
                                                                done);
                                        });
@@ -1435,10 +1442,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357121,13,24\n" +
-                                                               "1384357122,14,25\n" +
-                                                               "1384357123,15,26\n" +
-                                                               "1384357124,16,27\n" +
+                                                               "1384357121,13,24\n"                             +
+                                                               "1384357122,14,25\n"                             +
+                                                               "1384357123,15,26\n"                             +
+                                                               "1384357124,16,27\n"                             +
                                                                "1384357125,17,28\n",
                                                                done);
                                        });
@@ -1494,8 +1501,8 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357123,15,26\n" +
-                                                               "1384357124,16,27\n" +
+                                                               "1384357123,15,26\n"                             +
+                                                               "1384357124,16,27\n"                             +
                                                                "1384357125,17,28\n",
                                                                done);
                                        });
@@ -1515,8 +1522,8 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357121,13,24\n" +
-                                                               "1384357122,14,25\n" +
+                                                               "1384357121,13,24\n"                             +
+                                                               "1384357122,14,25\n"                             +
                                                                "1384357123,15,26\n",
                                                                done);
                                        });
@@ -1536,8 +1543,8 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357122,14,25\n" +
-                                                               "1384357123,15,26\n" +
+                                                               "1384357122,14,25\n"                             +
+                                                               "1384357123,15,26\n"                             +
                                                                "1384357124,16,27\n",
                                                                done);
                                        });
@@ -1557,10 +1564,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357121,13,24\n" +
-                                                               "1384357122,14,25\n" +
-                                                               "1384357123,15,26\n" +
-                                                               "1384357124,16,27\n" +
+                                                               "1384357121,13,24\n"                             +
+                                                               "1384357122,14,25\n"                             +
+                                                               "1384357123,15,26\n"                             +
+                                                               "1384357124,16,27\n"                             +
                                                                "1384357125,17,28\n",
                                                                done);
                                        });
@@ -1776,6 +1783,242 @@ describe("The test datastore data directory", function() {
             });   // end failures
 
          });   // end export()
+
+         describe("deleteDevice()", function() {
+            it("Should be able to delete a device", function(done) {
+               var userId = "1";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               var userDirBefore = fs.readdirSync(path.join(DATA_DIR, userId));
+               datastore.deleteDevice(userId, 'bubba', function(err) {
+                  should.not.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+                  var userDirAfter = fs.readdirSync(path.join(DATA_DIR, userId));
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  // make sure the correct device was deleted
+                  should.deepEqual(userDirBefore, ['bogus', 'bubba', 'speck1', 'speck2']);
+                  should.deepEqual(userDirAfter, ['bogus', 'speck1', 'speck2']);
+
+                  done();
+               });
+            });
+
+            it("Should be able to delete the same device again (no errors, but nothing will actually happen)", function(done) {
+               var userId = "1";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               var userDirBefore = fs.readdirSync(path.join(DATA_DIR, userId));
+               datastore.deleteDevice(userId, 'bubba', function(err) {
+                  should.not.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+                  var userDirAfter = fs.readdirSync(path.join(DATA_DIR, userId));
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  // make sure the correct device was deleted
+                  should.deepEqual(userDirBefore, ['bogus', 'speck1', 'speck2']);
+                  should.deepEqual(userDirAfter, ['bogus', 'speck1', 'speck2']);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a device for a non-existent user", function(done) {
+               var userId = "343";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               datastore.deleteDevice(userId, 'speck', function(err) {
+                  should.not.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a device for an undefined user", function(done) {
+               var userId;
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               datastore.deleteDevice(userId, 'speck', function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a device for a null user", function(done) {
+               var userId = null;
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               datastore.deleteDevice(userId, 'speck', function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a device for an invalid user", function(done) {
+               var userId = "-1";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               datastore.deleteDevice(userId, 'speck', function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a device for user '..'", function(done) {
+               var userId = "..";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               datastore.deleteDevice(userId, 'speck', function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a device for user '/'", function(done) {
+               var userId = "/";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               datastore.deleteDevice(userId, 'speck', function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete an undefined device", function(done) {
+               var userId = "1";
+               var deviceName;
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               var userDirBefore = fs.readdirSync(path.join(DATA_DIR, userId));
+               datastore.deleteDevice(userId, deviceName, function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+                  var userDirAfter = fs.readdirSync(path.join(DATA_DIR, userId));
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  // make sure nothing was deleted
+                  should.deepEqual(userDirAfter, userDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a null device", function(done) {
+               var userId = "1";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               var userDirBefore = fs.readdirSync(path.join(DATA_DIR, userId));
+               datastore.deleteDevice(userId, null, function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+                  var userDirAfter = fs.readdirSync(path.join(DATA_DIR, userId));
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  // make sure nothing was deleted
+                  should.deepEqual(userDirAfter, userDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete an empty-string device", function(done) {
+               var userId = "1";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               var userDirBefore = fs.readdirSync(path.join(DATA_DIR, userId));
+               datastore.deleteDevice(userId, '', function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+                  var userDirAfter = fs.readdirSync(path.join(DATA_DIR, userId));
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  // make sure nothing was deleted
+                  should.deepEqual(userDirAfter, userDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete a non-existent device", function(done) {
+               var userId = "1";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               var userDirBefore = fs.readdirSync(path.join(DATA_DIR, userId));
+               datastore.deleteDevice(userId, 'foo', function(err) {
+                  should.not.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+                  var userDirAfter = fs.readdirSync(path.join(DATA_DIR, userId));
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  // make sure nothing was deleted
+                  should.deepEqual(userDirAfter, userDirBefore);
+
+                  done();
+               });
+            });
+
+            it("Should fail to delete an invalid device", function(done) {
+               var userId = "1";
+               var dataDirBefore = fs.readdirSync(DATA_DIR);
+               var userDirBefore = fs.readdirSync(path.join(DATA_DIR, userId));
+               datastore.deleteDevice(userId, '..', function(err) {
+                  should.exist(err);
+
+                  var dataDirAfter = fs.readdirSync(DATA_DIR);
+                  var userDirAfter = fs.readdirSync(path.join(DATA_DIR, userId));
+
+                  // make sure no user directories were deleted
+                  should.deepEqual(dataDirAfter, dataDirBefore);
+
+                  // make sure nothing was deleted
+                  should.deepEqual(userDirAfter, userDirBefore);
+
+                  done();
+               });
+            });
+
+         });   // End deleteDevice()
       });   // end BodyTrackDatastore
    });
 });

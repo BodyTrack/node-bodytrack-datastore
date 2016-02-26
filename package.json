@@ -28,11 +28,11 @@
     "chai": "^3.5.0",
     "jsdoc": "^3.4.0",
     "mocha": "^2.4.5",
-    "rimraf": "^2.5.1",
-    "should": "^8.2.1"
+    "should": "^8.2.2"
   },
   "dependencies": {
     "http-status": "^0.1.8",
-    "log4js": "^0.6.30"
+    "log4js": "^0.6.31",
+    "rimraf": "^2.5.2"
   }
 }

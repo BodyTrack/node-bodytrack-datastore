@@ -377,11 +377,11 @@ function BodyTrackDatastore(config) {
                                                if (util.isString(format)) {
                                                   format = format.toLowerCase().trim();
                                                   if (format != 'csv' && format != 'json') {
-                                                     return callback(new DatastoreError(createJSendClientValidationError("Invalid format", format)));
+                                                     return callback(new DatastoreError(createJSendClientValidationError("Invalid format", {format: format})));
                                                   }
                                                }
                                                else {
-                                                  return callback(new DatastoreError(createJSendClientValidationError("Invalid format", format)));
+                                                  return callback(new DatastoreError(createJSendClientValidationError("Invalid format", {format: format})));
                                                }
 
                                                // specify the format (CSV or JSON)

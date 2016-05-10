@@ -370,8 +370,22 @@ function BodyTrackDatastore(config) {
                                                   return callback(err);
                                                }
 
-                                               // always request CSV from the datastore. JSON format will have to wait for an update to the datastore.
-                                               var parameters = ['--csv'];
+                                               // default to CSV format if unspecified
+                                               var format = util.isDefined(filter) && util.isDefined(filter.format) ? filter.format : 'csv';
+
+                                               // make sure the format is valid
+                                               if (util.isString(format)) {
+                                                  format = format.toLowerCase().trim();
+                                                  if (format != 'csv' && format != 'json') {
+                                                     return callback(new DatastoreError(createJSendClientValidationError("Invalid format", format)));
+                                                  }
+                                               }
+                                               else {
+                                                  return callback(new DatastoreError(createJSendClientValidationError("Invalid format", format)));
+                                               }
+
+                                               // specify the format (CSV or JSON)
+                                               var parameters = ['--' + format];
 
                                                // see whether the caller specified the min time
                                                filter = filter || {};

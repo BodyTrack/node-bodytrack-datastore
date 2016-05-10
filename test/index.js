@@ -1382,7 +1382,7 @@ describe("The test datastore data directory", function() {
 
             describe("successes", function() {
 
-               it('should export successfully all channels without filtering', function(done) {
+               it('should export successfully all channels without filtering (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1405,7 +1405,31 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should export successfully a single channel without filtering', function(done) {
+               it('should export successfully all channels without filtering (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["humidity", "particles", "raw_particles", "annotation"]
+                                       }],
+                                       { format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.humidity\",\"3.speck.particles\",\"3.speck.raw_particles\",\"3.speck.annotation\"],\"data\":[\n" +
+                                                               "[1384357121,24,13,1,null],\n" +
+                                                               "[1384357122,25,14,2,null],\n" +
+                                                               "[1384357123,26,15,3,\"This is the middle data sample\"],\n" +
+                                                               "[1384357124,27,16,4,null],\n" +
+                                                               "[1384357125,28,17,5,null]\n" +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should export successfully a single channel without filtering (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1428,7 +1452,31 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should ignore multiple instances of a requested channel', function(done) {
+               it('should export successfully a single channel without filtering (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles"]
+                                       }],
+                                       { format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\"],\"data\":[\n" +
+                                                               "[1384357121,13],\n" +
+                                                               "[1384357122,14],\n" +
+                                                               "[1384357123,15],\n" +
+                                                               "[1384357124,16],\n" +
+                                                               "[1384357125,17]\n" +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should ignore multiple instances of a requested channel (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1451,7 +1499,31 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should return no records if the maxTime is less than the timestamp of the first data record', function(done) {
+               it('should ignore multiple instances of a requested channel (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity", "particles", "particles", "humidity"]
+                                       }],
+                                       { format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
+                                                               "[1384357121,13,24],\n" +
+                                                               "[1384357122,14,25],\n" +
+                                                               "[1384357123,15,26],\n" +
+                                                               "[1384357124,16,27],\n" +
+                                                               "[1384357125,17,28]\n" +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should return no records if the maxTime is less than the timestamp of the first data record (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1469,7 +1541,26 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should return no records if the minTime is greater than the timestamp of the last data record', function(done) {
+               it('should return no records if the maxTime is less than the timestamp of the first data record (JSON', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles"]
+                                       }],
+                                       { maxTime : 1384357120, format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\"],\"data\":[\n" +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should return no records if the minTime is greater than the timestamp of the last data record (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1487,7 +1578,26 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should return appropriate records when minTime is specified', function(done) {
+               it('should return no records if the minTime is greater than the timestamp of the last data record (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles"]
+                                       }],
+                                       { minTime : 1384357126, format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\"],\"data\":[\n" +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should return appropriate records when minTime is specified (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1508,7 +1618,30 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should return appropriate records when maxTime is specified', function(done) {
+               it('should return appropriate records when minTime is specified (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { minTime : 1384357123, format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
+                                                               "[1384357123,15,26],\n"                             +
+                                                               "[1384357124,16,27],\n"                             +
+                                                               "[1384357125,17,28]\n"                              +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               // TODO: continue here...
+               it('should return appropriate records when maxTime is specified (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1529,7 +1662,29 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should return appropriate records when both minTime and maxTime are specified to select a subset', function(done) {
+               it('should return appropriate records when maxTime is specified (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { maxTime : 1384357123, format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
+                                                               "[1384357121,13,24],\n"                             +
+                                                               "[1384357122,14,25],\n"                             +
+                                                               "[1384357123,15,26]\n"                              +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should return appropriate records when both minTime and maxTime are specified to select a subset (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1550,7 +1705,29 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should return appropriate records when both minTime and maxTime are specified to select a superset', function(done) {
+               it('should return appropriate records when both minTime and maxTime are specified to select a subset (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { minTime : 1384357122, maxTime : 1384357124, format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
+                                                               "[1384357122,14,25],\n"                             +
+                                                               "[1384357123,15,26],\n"                             +
+                                                               "[1384357124,16,27]\n"                              +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should return appropriate records when both minTime and maxTime are specified to select a superset (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1573,7 +1750,31 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should return no records when both minTime and maxTime are specified, but with values swapped', function(done) {
+               it('should return appropriate records when both minTime and maxTime are specified to select a superset (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { minTime : 1384357120, maxTime : 1384357126, format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
+                                                               "[1384357121,13,24],\n"                             +
+                                                               "[1384357122,14,25],\n"                             +
+                                                               "[1384357123,15,26],\n"                              +
+                                                               "[1384357124,16,27],\n"                              +
+                                                               "[1384357125,17,28]\n"                              +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('should return no records when both minTime and maxTime are specified, but with values swapped (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
                                           deviceName : deviceName,
@@ -1587,6 +1788,62 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n",
+                                                               done);
+                                       });
+               });
+
+               it('should return no records when both minTime and maxTime are specified, but with values swapped (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { minTime : 1384357124, maxTime : 1384357122, format : "json"  },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
+                                                               "]}\n",
+                                                               done);
+                                       });
+               });
+
+               it('case of format should not matter (CSV)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { minTime : 1384357124, maxTime : 1384357122, format: "CSv" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "EpochTime,3.speck.particles,3.speck.humidity\n",
+                                                               done);
+                                       });
+               });
+
+               it('case of format should not matter (JSON)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { minTime : 1384357124, maxTime : 1384357122, format : "jSoN"  },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
+                                                               "]}\n",
                                                                done);
                                        });
                });
@@ -1775,6 +2032,54 @@ describe("The test datastore data directory", function() {
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { maxTime : "foo" },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+
+               it('should fail if the format is not "csv" or "json" (case-insensitive)', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { format : "bogus" },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+
+               it('should fail if the format is not a string 1', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { format : 42 },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+
+               it('should fail if the format is not a string 2', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { format : ['a', 'b', 'c'] },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+
+               it('should fail if the format is not a string 3', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { format : { 'foo' : 'bar' } },
                                        function(err, eventEmitter) {
                                           verifyValidationError(err, eventEmitter, done);
                                        });

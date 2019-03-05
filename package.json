@@ -1,6 +1,6 @@
 {
   "name": "bodytrack-datastore",
-  "version": "2.7.1",
+  "version": "3.0.0",
   "description": "A Node.js interface for the BodyTrack Datastore.",
   "main": "index.js",
   "scripts": {
@@ -25,14 +25,20 @@
   },
   "homepage": "https://github.com/BodyTrack/node-bodytrack-datastore",
   "devDependencies": {
-    "chai": "^3.5.0",
+    "chai": "^4.2.0",
     "jsdoc": "^3.4.0",
-    "mocha": "^2.4.5",
-    "should": "^8.2.2"
+    "log4js": "^4.0.2",
+    "mocha": "^6.0.2",
+    "should": "^13.2.3"
   },
   "dependencies": {
-    "http-status": "^0.1.8",
-    "log4js": "^0.6.31",
+    "@log4js-node/log4js-api": "^1.0.2",
+    "data-type-utils": "^1.2.0",
+    "http-status": "^1.3.1",
+    "jsend-utils": "^2.0.0",
     "rimraf": "^2.5.2"
+  },
+  "engines": {
+    "node": ">=10.15.0"
   }
 }

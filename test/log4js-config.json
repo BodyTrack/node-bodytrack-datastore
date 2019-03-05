@@ -1,0 +1,17 @@
+{
+   "appenders" : {
+      "console" : {
+         "type" : "console",
+         "layout" : {
+            "type" : "pattern",
+            "pattern" : "%d{ABSOLUTE} [%[%p%]] %c - %m"
+         }
+      }
+   },
+   "categories" : {
+      "default" : {
+         "appenders" : ["console"],
+         "level" : "debug"
+      }
+   }
+}

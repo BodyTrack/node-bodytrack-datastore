@@ -1,17 +1,17 @@
-var execFile = require('child_process').execFile;
-var spawn = require('child_process').spawn;
-var fs = require('fs');
-var path = require('path');
-var util = require('./lib/util');
-var TempFile = require('./lib/TempFile');
-var DatastoreError = require('./lib/errors').DatastoreError;
-var createJSendClientValidationError = require('./lib/jsend').createJSendClientValidationError;
-var createJSendServerError = require('./lib/jsend').createJSendServerError;
-var log = require('log4js').getLogger("bodytrack-datastore");
-var rimraf = require('rimraf');
+const execFile = require('child_process').execFile;
+const spawn = require('child_process').spawn;
+const fs = require('fs');
+const path = require('path');
+const TypeUtils = require('data-type-utils');
+const TempFile = require('./lib/TempFile');
+const DatastoreError = require('./lib/DatastoreError');
+const JSendClientValidationError = require('jsend-utils').JSendClientValidationError;
+const JSendServerError = require('jsend-utils').JSendServerError;
+const rimraf = require('rimraf');
+const log = require('@log4js-node/log4js-api').getLogger("bodytrack-datastore");
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];
-const VALID_KEY_CHARACTERS_PATTERN = /^[a-zA-Z0-9_\.\-]+$/;
+const VALID_KEY_CHARACTERS_PATTERN = /^[a-zA-Z0-9_.\-]+$/;
 
 //======================================================================================================================
 // CLASS DEFINITION
@@ -35,69 +35,68 @@ const VALID_KEY_CHARACTERS_PATTERN = /^[a-zA-Z0-9_\.\-]+$/;
  */
 function BodyTrackDatastore(config) {
 
-   if (!util.isDefined(config)) {
+   if (!TypeUtils.isDefinedAndNotNull(config)) {
       throw new Error("config cannot be undefined or null");
    }
-   else if (!util.isDefined(config.binDir)) {
+   else if (!TypeUtils.isDefinedAndNotNull(config.binDir)) {
       throw new Error("config.binDir cannot be undefined or null");
    }
-   else if (!util.isDefined(config.dataDir)) {
+   else if (!TypeUtils.isDefinedAndNotNull(config.dataDir)) {
       throw new Error("config.dataDir cannot be undefined or null");
    }
    // PRIVATE METHODS
 
    // joining with the . ensures there's no trailing slash
-   var binDir = path.join(util.isDefined(config) ? config.binDir : '', '.');
-   var dataDir = path.join(util.isDefined(config) ? config.dataDir : '', '.');
+   const binDir = path.join(TypeUtils.isDefinedAndNotNull(config) ? config.binDir : '', '.');
+   const dataDir = path.join(TypeUtils.isDefinedAndNotNull(config) ? config.dataDir : '', '.');
 
-   var convertNullToString = function(val) {
-      return val == null ? 'null' : val;
+   const convertNullToString = function(val) {
+      return val === null ? 'null' : val;
    };
 
-   var executeCommand = function(commandName, parameters, callback) {
-      var executable = path.join(binDir, commandName, '.');
+   const executeCommand = function(commandName, parameters = [], callback) {
+      const executable = path.join(binDir, commandName, '.');
 
-      parameters = parameters || [];
       parameters.unshift(dataDir);
-      var cleanParams = parameters.map(convertNullToString);
+      const cleanParams = parameters.map(convertNullToString);
 
       execFile(executable, cleanParams, callback);
    };
 
-   var isUserIdValid = function(userId) {
-      return util.isPositiveInt(userId);
+   const isUserIdValid = function(userId) {
+      return TypeUtils.isPositiveInt(userId);
    };
 
-   var validateUserIdDeviceChannelObjects = function(userIdDeviceChannelObjects, callback) {
-      var userIdDeviceChannelsMap = {};
-      var userIdDeviceChannels = [];
+   const validateUserIdDeviceChannelObjects = function(userIdDeviceChannelObjects, callback) {
+      const userIdDeviceChannelsMap = {};
+      const userIdDeviceChannels = [];
 
       if (Array.isArray(userIdDeviceChannelObjects) && userIdDeviceChannelObjects.length > 0) {
          // check each item in the array to make sure they're all strings.
-         for (var i = 0; i < userIdDeviceChannelObjects.length; i++) {
-            var o = userIdDeviceChannelObjects[i];
-            var userId = o.userId;
-            var deviceName = o.deviceName;
-            var channelNames = o.channelNames;
-            if (util.isObject(o)) {
+         for (let i = 0; i < userIdDeviceChannelObjects.length; i++) {
+            const o = userIdDeviceChannelObjects[i];
+            if (TypeUtils.isDefinedAndNotNull(o.userId) &&
+                TypeUtils.isDefinedAndNotNull(o.deviceName) &&
+                TypeUtils.isDefinedAndNotNull(o.channelNames)) {
 
-               if (!isUserIdValid(userId)) {
-                  var msg = "User ID [" + userId + "] must be an integer";
-                  return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
-               }
-               if (!BodyTrackDatastore.isValidKey(deviceName)) {
-                  var msg = "Invalid device name [" + deviceName + "]";
-                  return callback(new DatastoreError(createJSendClientValidationError(msg, { deviceName : msg })));
+               if (!isUserIdValid(o.userId)) {
+                  const msg = "User ID [" + o.userId + "] must be an integer";
+                  return callback(new DatastoreError(new JSendClientValidationError(msg, { userId : msg })));
                }
 
-               if (Array.isArray(channelNames) && channelNames.length > 0) {
-                  for (var j = 0; j < channelNames.length; j++) {
-                     var channelName = channelNames[j];
-                     var userIdDeviceChannel = userId + "." + deviceName + "." + channelName;
+               if (!BodyTrackDatastore.isValidKey(o.deviceName)) {
+                  const msg = "Invalid device name [" + o.deviceName + "]";
+                  return callback(new DatastoreError(new JSendClientValidationError(msg, { deviceName : msg })));
+               }
+
+               if (Array.isArray(o.channelNames) && o.channelNames.length > 0) {
+                  for (let j = 0; j < o.channelNames.length; j++) {
+                     const channelName = o.channelNames[j];
+                     const userIdDeviceChannel = parseInt(o.userId) + "." + o.deviceName + "." + channelName;
 
                      if (!BodyTrackDatastore.isValidKey(channelName)) {
-                        var msg = "Invalid channel name [" + channelName + "] in [" + userIdDeviceChannel + "]";
-                        return callback(new DatastoreError(createJSendClientValidationError(msg, { channelNames : msg })));
+                        const msg = "Invalid channel name [" + channelName + "] in [" + userIdDeviceChannel + "]";
+                        return callback(new DatastoreError(new JSendClientValidationError(msg, { channelNames : msg })));
                      }
 
                      // if no error by now, then it's valid, so hang on to it, but only if we haven't seen this one before
@@ -108,22 +107,22 @@ function BodyTrackDatastore(config) {
                   }
                }
                else {
-                  var msg = "channelNames must be a non-empty array of strings";
-                  return callback(new DatastoreError(createJSendClientValidationError(msg, { channelNames : msg })));
+                  const msg = "channelNames must be a non-empty array of strings";
+                  return callback(new DatastoreError(new JSendClientValidationError(msg, { channelNames : msg })));
                }
             }
             else {
-               var msg = "userIdDeviceChannelObjects array must contain only objects";
-               return callback(new DatastoreError(createJSendClientValidationError(msg, { userIdDeviceChannelObjects : msg })));
+               const msg = "userIdDeviceChannelObjects array must contain only objects";
+               return callback(new DatastoreError(new JSendClientValidationError(msg, { userIdDeviceChannelObjects : msg })));
             }
          }
       }
       else {
-         var msg = "userIdDeviceChannelObjects must be a non-empty array of objects";
-         return callback(new DatastoreError(createJSendClientValidationError(msg, { userIdDeviceChannelObjects : msg })));
+         const msg = "userIdDeviceChannelObjects must be a non-empty array of objects";
+         return callback(new DatastoreError(new JSendClientValidationError(msg, { userIdDeviceChannelObjects : msg })));
       }
 
-      callback(null, userIdDeviceChannels);
+      return callback(null, userIdDeviceChannels);
    };
 
    // PRIVILEGED METHODS
@@ -157,13 +156,13 @@ function BodyTrackDatastore(config) {
       }
 
       // finally, make sure the executables exist and are files
-      for (var i = 0; i < DATASTORE_EXECUTABLES.length; i++) {
-         var exePath = path.join(binDir, DATASTORE_EXECUTABLES[i]);
+      for (let i = 0; i < DATASTORE_EXECUTABLES.length; i++) {
+         const exePath = path.join(binDir, DATASTORE_EXECUTABLES[i]);
          if (!fs.existsSync(exePath)) {
             log.error("BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") does not exist");
             return false;
          }
-         var exeStat = fs.statSync(exePath);
+         const exeStat = fs.statSync(exePath);
          if (!exeStat.isFile()) {
             log.error("BodyTrackDatastore.isConfigValid(): executable (" + exePath + ") is not a file");
             return false;
@@ -222,15 +221,13 @@ function BodyTrackDatastore(config) {
       // make sure they at least specified the userId
       if (options.hasOwnProperty('userId')) {
 
-         var userId = options['userId'];
-
          // make sure the userId is valid
-         if (!isUserIdValid(userId)) {
-            var msg = " User ID must be a positive integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
+         if (!isUserIdValid(options['userId'])) {
+            const msg = " User ID must be a positive integer";
+            return callback(new DatastoreError(new JSendClientValidationError(msg, { userId : msg })));
          }
 
-         var parameters = ["-r", userId];
+         const parameters = ["-r", parseInt(options['userId'])];
 
          // see whether the caller specified the flag to find the most recent data sample
          if (options.hasOwnProperty('willFindMostRecentSample')) {
@@ -240,23 +237,23 @@ function BodyTrackDatastore(config) {
          }
 
          // see whether deviceName is specified
-         if (options.hasOwnProperty('deviceName') && options['deviceName'] != null) {
-            var deviceName = options['deviceName'];
+         if (options.hasOwnProperty('deviceName') && options['deviceName'] !== null) {
+            const deviceName = options['deviceName'];
 
             // make sure the deviceName is valid
             if (!BodyTrackDatastore.isValidKey(deviceName)) {
-               var msg = "Invalid device name";
-               return callback(new DatastoreError(createJSendClientValidationError(msg, { deviceName : msg })));
+               const msg = "Invalid device name";
+               return callback(new DatastoreError(new JSendClientValidationError(msg, { deviceName : msg })));
             }
 
             // see whether channelName is specified
-            if (options.hasOwnProperty('channelName') && options['channelName'] != null) {
-               var channelName = options['channelName'];
+            if (options.hasOwnProperty('channelName') && options['channelName'] !== null) {
+               const channelName = options['channelName'];
 
                // make sure the channelName is valid
                if (!BodyTrackDatastore.isValidKey(channelName)) {
-                  var msg = "Invalid channel name";
-                  return callback(new DatastoreError(createJSendClientValidationError(msg, { channelName : msg })));
+                  const msg = "Invalid channel name";
+                  return callback(new DatastoreError(new JSendClientValidationError(msg, { channelName : msg })));
                }
 
                // Both deviceName and channelName are specified and valid,
@@ -275,43 +272,41 @@ function BodyTrackDatastore(config) {
          // Now that device and channel have been handled, check for filtering by min/max time...
 
          // see whether the caller specified the min time
-         if (options.hasOwnProperty('minTime') && options['minTime'] != null) {
-            var minTime = options['minTime'];
+         if (options.hasOwnProperty('minTime') && options['minTime'] !== null) {
 
             // make sure the minTime is valid
-            if (!util.isNumber(minTime)) {
-               var msg = "Invalid min time";
-               return callback(new DatastoreError(createJSendClientValidationError(msg, { minTime : msg })));
+            if (!TypeUtils.isNumeric(options['minTime'])) {
+               const msg = "Invalid min time";
+               return callback(new DatastoreError(new JSendClientValidationError(msg, { minTime : msg })));
             }
             parameters.push("--min-time");
-            parameters.push(minTime);
+            parameters.push(parseFloat(options['minTime']));
          }
 
          // see whether the caller specified the max time
-         if (options.hasOwnProperty('maxTime') && options['maxTime'] != null) {
-            var maxTime = options['maxTime'];
+         if (options.hasOwnProperty('maxTime') && options['maxTime'] !== null) {
 
             // make sure the maxTime is valid
-            if (!util.isNumber(maxTime)) {
-               var msg = "Invalid max time";
-               return callback(new DatastoreError(createJSendClientValidationError(msg, { maxTime : msg })));
+            if (!TypeUtils.isNumeric(options['maxTime'])) {
+               const msg = "Invalid max time";
+               return callback(new DatastoreError(new JSendClientValidationError(msg, { maxTime : msg })));
             }
             parameters.push("--max-time");
-            parameters.push(maxTime);
+            parameters.push(parseFloat(options['maxTime']));
          }
 
          // FINALLY, execute the command!
          executeCommand("info", parameters,
                         function(err, stdout) {
                            if (err) {
-                              return callback(new DatastoreError(createJSendServerError('Failed to call info', err)));
+                              return callback(new DatastoreError(new JSendServerError('Failed to call info', err)));
                            }
                            return callback(null, JSON.parse(stdout));
                         });
       }
       else {
-         var msg = "User ID is required";
-         return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
+         const msg = "User ID is required";
+         return callback(new DatastoreError(new JSendClientValidationError(msg, { userId : msg })));
       }
    };
 
@@ -320,7 +315,7 @@ function BodyTrackDatastore(config) {
     * Exports data from the specified device+channel(s) as CSV, optionally filtered by min and max time. Data is
     * returned to the caller as an EventEmitter given to the <code>callback</code> function. The devices and channels to
     * export are defined by the <code>userIdDeviceChannelObjects</code> argument. The
-    * <code>userIdDeviceChannelObjects</code> argument must be a non-empty array of objects, where each object contains
+    * <code>userIdDeviceChannelObjects</code> argument must be a non-empty array of objects, where each object is
     * of the form: <code>{userId: USER_ID, deviceName: "DEVICE_NAME", channelNames: ["CHANNEL_NAME_1",...]}</code>. The
     * <code>userId</code> field must be an integer, the <code>deviceName</code> a string, and the
     * <code>channelName</code> must be an array of strings.
@@ -358,10 +353,10 @@ function BodyTrackDatastore(config) {
     * </p>
     *
     * @param {Array} userIdDeviceChannelObjects - a non-empty array of objects. See above for details.
-    * @param {object} filter Object containing the various filter parameters
+    * @param {object} desiredFilter Object containing the various filter parameters
     * @param {function} callback - callback function with the signature <code>callback(err, eventEmitter)</code>
     */
-   this.exportData = function(userIdDeviceChannelObjects, filter, callback) {
+   this.exportData = function(userIdDeviceChannelObjects, desiredFilter = {}, callback) {
       if (typeof callback === 'function') {
 
          validateUserIdDeviceChannelObjects(userIdDeviceChannelObjects,
@@ -370,48 +365,48 @@ function BodyTrackDatastore(config) {
                                                   return callback(err);
                                                }
 
+                                               // make sure the filter is non-null
+                                               const filter = desiredFilter === null ? {} : desiredFilter;
+
                                                // default to CSV format if unspecified
-                                               var format = util.isDefined(filter) && util.isDefined(filter.format) ? filter.format : 'csv';
+                                               let format = TypeUtils.isDefinedAndNotNull(filter) && TypeUtils.isDefinedAndNotNull(filter.format) ? filter.format : 'csv';
 
                                                // make sure the format is valid
-                                               if (util.isString(format)) {
+                                               if (TypeUtils.isString(format)) {
                                                   format = format.toLowerCase().trim();
                                                   if (format != 'csv' && format != 'json') {
-                                                     return callback(new DatastoreError(createJSendClientValidationError("Invalid format", {format: format})));
+                                                     return callback(new DatastoreError(new JSendClientValidationError("Invalid format", { format : format })));
                                                   }
                                                }
                                                else {
-                                                  return callback(new DatastoreError(createJSendClientValidationError("Invalid format", {format: format})));
+                                                  return callback(new DatastoreError(new JSendClientValidationError("Invalid format", { format : format })));
                                                }
 
                                                // specify the format (CSV or JSON)
-                                               var parameters = ['--' + format];
+                                               const parameters = ['--' + format];
 
                                                // see whether the caller specified the min time
-                                               filter = filter || {};
-                                               if (filter.hasOwnProperty('minTime') && filter['minTime'] != null) {
-                                                  var minTime = filter['minTime'];
+                                               if (filter.hasOwnProperty('minTime') && filter['minTime'] !== null) {
 
                                                   // make sure the minTime is valid
-                                                  if (!util.isNumber(minTime)) {
-                                                     var msg = "Invalid min time";
-                                                     return callback(new DatastoreError(createJSendClientValidationError(msg, { minTime : msg })));
+                                                  if (!TypeUtils.isNumeric(filter['minTime'])) {
+                                                     const msg = "Invalid min time";
+                                                     return callback(new DatastoreError(new JSendClientValidationError(msg, { minTime : msg })));
                                                   }
                                                   parameters.push("--start");
-                                                  parameters.push(minTime);
+                                                  parameters.push(parseFloat(filter['minTime']));
                                                }
 
                                                // see whether the caller specified the max time
-                                               if (filter.hasOwnProperty('maxTime') && filter['maxTime'] != null) {
-                                                  var maxTime = filter['maxTime'];
+                                               if (filter.hasOwnProperty('maxTime') && filter['maxTime'] !== null) {
 
                                                   // make sure the maxTime is valid
-                                                  if (!util.isNumber(maxTime)) {
-                                                     var msg = "Invalid max time";
-                                                     return callback(new DatastoreError(createJSendClientValidationError(msg, { maxTime : msg })));
+                                                  if (!TypeUtils.isNumeric(filter['maxTime'])) {
+                                                     const msg = "Invalid max time";
+                                                     return callback(new DatastoreError(new JSendClientValidationError(msg, { maxTime : msg })));
                                                   }
                                                   parameters.push("--end");
-                                                  parameters.push(maxTime);
+                                                  parameters.push(parseFloat(filter['maxTime']));
                                                }
 
                                                parameters.push(dataDir);
@@ -420,8 +415,8 @@ function BodyTrackDatastore(config) {
                                                });
 
                                                // FINALLY, spawn the command, and return to the caller.
-                                               var exportExe = path.join(binDir, 'export', '.');
-                                               var command = spawn(exportExe, parameters);
+                                               const exportExe = path.join(binDir, 'export', '.');
+                                               const command = spawn(exportExe, parameters);
                                                return callback(null, command);
                                             });
       }
@@ -445,7 +440,7 @@ function BodyTrackDatastore(config) {
     * with more details about the error.
     * </p>
     *
-    * @param {int} userId - the user ID
+    * @param {int|string} userId - the user ID
     * @param {string} deviceName - the device name
     * @param {string} channelName - the channel name
     * @param {int} level - the tile level
@@ -456,39 +451,44 @@ function BodyTrackDatastore(config) {
       if (typeof callback === 'function') {
          // validate inputs
          if (!isUserIdValid(userId)) {
-            var msg = " User ID must be a positive integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
+            const msg = " User ID must be a positive integer";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { userId : msg })));
          }
-         if (!util.isInt(level)) {
-            var msg = "Level must be an integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { level : msg })));
+         else if (!TypeUtils.isInt(level)) {
+            const msg = "Level must be an integer";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { level : msg })));
          }
-         if (!util.isInt(offset)) {
-            var msg = "Offset must be an integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { offset : msg })));
+         else if (!TypeUtils.isInt(offset)) {
+            const msg = "Offset must be an integer";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { offset : msg })));
          }
-         if (!BodyTrackDatastore.isValidKey(deviceName)) {
-            var msg = "Invalid device name";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { deviceName : msg })));
+         else if (!BodyTrackDatastore.isValidKey(deviceName)) {
+            const msg = "Invalid device name";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { deviceName : msg })));
          }
-         if (!BodyTrackDatastore.isValidKey(channelName)) {
-            var msg = "Invalid channel name";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { channelName : msg })));
+         else if (!BodyTrackDatastore.isValidKey(channelName)) {
+            const msg = "Invalid channel name";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { channelName : msg })));
          }
+         else {
+            const parameters = [parseInt(userId),
+                                deviceName + "." + channelName,
+                                level,
+                                offset];
 
-         var parameters = [userId,
-                           deviceName + "." + channelName,
-                           level,
-                           offset];
-
-         executeCommand("gettile", parameters,
-                        function(err, stdout) {
-                           if (err) {
-                              return callback(new DatastoreError(createJSendServerError('Failed to call get tile', err)));
-                           }
-
-                           return callback(null, JSON.parse(stdout));
-                        });
+            executeCommand("gettile", parameters,
+                           function(err, stdout) {
+                              if (err) {
+                                 callback(new DatastoreError(new JSendServerError('Failed to call get tile', err)));
+                              }
+                              else {
+                                 callback(null, JSON.parse(stdout));
+                              }
+                           });
+         }
+      }
+      else {
+         log.error("Callback is not a function!");
       }
    };
 
@@ -497,7 +497,7 @@ function BodyTrackDatastore(config) {
     * Returns the tiles for the given <code>userIdDeviceChannelObjects</code>, <code>level</code>, and
     * <code>offset</code>.  The tiles are returned to the caller as an EventEmitter given to the <code>callback</code>
     * function. The <code>userIdDeviceChannelObjects</code> argument must be a non-empty array of objects, where each
-    * object contains of the form: <code>{userId: USER_ID, deviceName: "DEVICE_NAME", channelName: ["CHANNEL_NAME_1",...]}</code>.
+    * object is of the form: <code>{userId: USER_ID, deviceName: "DEVICE_NAME", channelName: ["CHANNEL_NAME_1",...]}</code>.
     * The <code>userId</code> field must be an integer, the <code>deviceName</code> a string, and the
     * <code>channelName</code> must be an array of strings.
     * </p>
@@ -541,24 +541,24 @@ function BodyTrackDatastore(config) {
                                                }
 
                                                // validate level and offset
-                                               if (!util.isInt(level)) {
-                                                  var msg = "Level must be an integer";
-                                                  return callback(new DatastoreError(createJSendClientValidationError(msg, { level : msg })));
+                                               if (!TypeUtils.isInt(level)) {
+                                                  const msg = "Level must be an integer";
+                                                  return callback(new DatastoreError(new JSendClientValidationError(msg, { level : msg })));
                                                }
-                                               if (!util.isInt(offset)) {
-                                                  var msg = "Offset must be an integer";
-                                                  return callback(new DatastoreError(createJSendClientValidationError(msg, { offset : msg })));
+                                               if (!TypeUtils.isInt(offset)) {
+                                                  const msg = "Offset must be an integer";
+                                                  return callback(new DatastoreError(new JSendClientValidationError(msg, { offset : msg })));
                                                }
 
-                                               var parameters = [dataDir,
-                                                                 '--multi',
-                                                                 userIdDeviceChannels.join(','),
-                                                                 level,
-                                                                 offset];
+                                               const parameters = [dataDir,
+                                                                   '--multi',
+                                                                   userIdDeviceChannels.join(','),
+                                                                   level,
+                                                                   offset];
 
                                                // FINALLY, spawn the command, and return to the caller.
-                                               var exe = path.join(binDir, 'gettile', '.');
-                                               var command = spawn(exe, parameters);
+                                               const exe = path.join(binDir, 'gettile', '.');
+                                               const command = spawn(exe, parameters);
                                                return callback(null, command);
                                             });
       }
@@ -588,7 +588,7 @@ function BodyTrackDatastore(config) {
     * with more details about the error.
     * </p>
     *
-    * @param {int} userId - the user ID
+    * @param {int|string} userId - the user ID
     * @param {string} deviceName - the device name
     * @param {object} data - the JSON data to import
     * @param {function} callback - callback function with the signature <code>callback(err, importResults)</code>
@@ -597,115 +597,120 @@ function BodyTrackDatastore(config) {
 
       if (typeof callback === 'function') {
          if (!isUserIdValid(userId)) {
-            var msg = " User ID must be a positive integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
+            const msg = " User ID must be a positive integer";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { userId : msg })));
          }
-         if (!BodyTrackDatastore.isValidKey(deviceName)) {
-            var msg = "Invalid device name";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { deviceName : msg })));
+         else if (!BodyTrackDatastore.isValidKey(deviceName)) {
+            const msg = "Invalid device name";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { deviceName : msg })));
          }
-         if (!util.isDefined(data)) {
-            var msg = "Data cannot be null or undefined";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { data : msg })));
+         else if (!TypeUtils.isDefinedAndNotNull(data)) {
+            const msg = "Data cannot be null or undefined";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { data : msg })));
          }
+         else {
 
-         // create a temp file to write the uploaded data so the datastore can import it
-         TempFile.create({ prefix : 'node_bodytrack_datastore_json_data_to_import_', suffix : '.json' },
-               function(createTempFileErr, tempFile) {
-                  if (createTempFileErr) {
-                     return callback(new DatastoreError(createJSendServerError('Upload failed due to an error trying to open the temp file')));
-                  }
+            // create a temp file to write the uploaded data so the datastore can import it
+            TempFile.create({ prefix : 'node_bodytrack_datastore_json_data_to_import_', suffix : '.json' },
+                            function(createTempFileErr, tempFile) {
+                               if (createTempFileErr) {
+                                  callback(new DatastoreError(new JSendServerError('Upload failed due to an error trying to open the temp file')));
+                               }
+                               else {
+                                  fs.writeFile(tempFile.path,
+                                               JSON.stringify(data),
+                                               function(writeToTempFileErr) {
 
-                  fs.writeFile(tempFile.path,
-                               JSON.stringify(data),
-                               function(writeToTempFileErr) {
+                                                  // try closing the file, regardless of whether the write actually succeeded.  We'll
+                                                  // verify write success later
+                                                  fs.close(tempFile.fd, function(closeTempFileErr) {
+                                                     if (closeTempFileErr) {
+                                                        log.error("Error trying to close the temp file [" + tempFile.path + "]: " + closeTempFileErr);
 
-                                  // try closing the file, regardless of whether the write actually succeeded.  We'll
-                                  // verify write success later
-                                  fs.close(tempFile.fd, function(closeTempFileErr) {
-                                     if (closeTempFileErr) {
-                                        log.error("Error trying to close the temp file [" + tempFile.path + "]: " + closeTempFileErr);
+                                                        // we couldn't close the file, so it's doubtful that cleaning up will work, but
+                                                        // give it a try anyway...
+                                                        try {
+                                                           tempFile.cleanup();
+                                                        }
+                                                        catch (e) {
+                                                           log.error("Error trying to cleanup the temp file after failing to close it [" + tempFile.path + "]: " + e);
+                                                        }
 
-                                        // we couldn't close the file, so it's doubtful that cleaning up will work, but
-                                        // give it a try anyway...
-                                        try {
-                                           tempFile.cleanup();
-                                        }
-                                        catch (e) {
-                                           log.error("Error trying to cleanup the temp file after failing to close it [" + tempFile.path + "]: " + e);
-                                        }
+                                                        callback(new DatastoreError(new JSendServerError('Upload failed due to an error trying to close the temp file')));
+                                                     }
+                                                     else {
 
-                                        return callback(new DatastoreError(createJSendServerError('Upload failed due to an error trying to close the temp file')));
-                                     }
+                                                        // The file should be closed now, so see whether we actually successfully wrote to
+                                                        // the file.  If not, remove it, and abort.
+                                                        if (writeToTempFileErr) {
+                                                           log.error("Error trying to write to the temp file [" + tempFile.path + "]: " + writeToTempFileErr);
 
-                                     // The file should be closed now, so see whether we actually successfully wrote to
-                                     // the file.  If not, remove it, and abort.
-                                     if (writeToTempFileErr) {
-                                        log.error("Error trying to write to the temp file [" + tempFile.path + "]: " + writeToTempFileErr);
+                                                           try {
+                                                              tempFile.cleanup();
+                                                           }
+                                                           catch (e) {
+                                                              log.error("Error trying to cleanup the temp file after failing to write to it [" + tempFile.path + "]: " + e);
+                                                           }
 
-                                        try {
-                                           tempFile.cleanup();
-                                        }
-                                        catch (e) {
-                                           log.error("Error trying to cleanup the temp file after failing to write to it [" + tempFile.path + "]: " + e);
-                                        }
+                                                           callback(new DatastoreError(new JSendServerError('Failed to write to temp file', err)));
+                                                        }
+                                                        else {
 
-                                        return callback(new DatastoreError(createJSendServerError('Failed to write to temp file', err)));
-                                     }
-                                     else {
+                                                           // we successfully wrote to the file, and successfully closed it, so we're good
+                                                           // to go and ready to pass off to the datastore.  Start by creating the params
+                                                           // for the import command
+                                                           const parameters = [parseInt(userId),
+                                                                               deviceName,
+                                                                               "--format",
+                                                                               "json",
+                                                                               tempFile.path];
 
-                                        // we successfully wrote to the file, and successfully closed it, so we're good
-                                        // to go and ready to pass off to the datastore.  Start by creating the params
-                                        // for the import command
-                                        var parameters = [userId,
-                                                          deviceName,
-                                                          "--format",
-                                                          "json",
-                                                          tempFile.path];
+                                                           executeCommand("import",
+                                                                          parameters,
+                                                                          function(importError, stdout) {
 
-                                        executeCommand("import",
-                                                       parameters,
-                                                       function(importError, stdout) {
+                                                                             // we're done with the temp file now, so clean it up before doing anything else
+                                                                             try {
+                                                                                tempFile.cleanup();
+                                                                             }
+                                                                             catch (e) {
+                                                                                log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
+                                                                             }
 
-                                                          // we're done with the temp file now, so clean it up before doing anything else
-                                                          try {
-                                                             tempFile.cleanup();
-                                                          }
-                                                          catch (e) {
-                                                             log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
-                                                          }
+                                                                             if (importError) {
+                                                                                return callback(new DatastoreError(new JSendServerError('Failed to execute datastore import command', importError)));
+                                                                             }
 
-                                                          if (importError) {
-                                                             return callback(new DatastoreError(createJSendServerError('Failed to execute datastore import command', importError)));
-                                                          }
+                                                                             let datastoreResponse = null;
+                                                                             try {
+                                                                                datastoreResponse = JSON.parse(stdout);
+                                                                             }
+                                                                             catch (e) {
+                                                                                log.error("Error parsing datastore response: ", e);
+                                                                                datastoreResponse = null;
+                                                                             }
 
-                                                          var datastoreResponse = null;
+                                                                             const wasSuccessful = datastoreResponse !== null &&
+                                                                                                   typeof datastoreResponse['failed_records'] !== 'undefined' &&
+                                                                                                   parseInt(datastoreResponse['failed_records']) === 0 &&
+                                                                                                   typeof datastoreResponse['successful_records'] !== 'undefined' &&
+                                                                                                   datastoreResponse['successful_records'] > 0;
 
-                                                          try {
-                                                             datastoreResponse = JSON.parse(stdout);
-                                                          }
-                                                          catch (e) {
-                                                             datastoreResponse = null;
-                                                          }
+                                                                             if (wasSuccessful) {
+                                                                                return callback(null, datastoreResponse);
+                                                                             }
 
-                                                          var wasSuccessful = datastoreResponse != null &&
-                                                                              typeof datastoreResponse['failed_records'] !== 'undefined' &&
-                                                                              datastoreResponse['failed_records'] == 0 &&
-                                                                              typeof datastoreResponse['successful_records'] !== 'undefined' &&
-                                                                              datastoreResponse['successful_records'] > 0;
+                                                                             return callback(new DatastoreError(new JSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
 
-                                                          if (wasSuccessful) {
-                                                             return callback(null, datastoreResponse);
-                                                          }
+                                                                          });
 
-                                                          return callback(new DatastoreError(createJSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
-
-                                                       });
-
-                                     }
-                                  });
-                               });
-               });
+                                                        }
+                                                     }
+                                                  });
+                                               });
+                               }
+                            });
+         }
       }
    };
 
@@ -721,36 +726,34 @@ function BodyTrackDatastore(config) {
     *    <code>deviceName</code> may have been syntactically valid, but not denote any actual entity.
     * </p>
     *
-    * @param {int|String} userId - the user ID
+    * @param {int|string} userId - the user ID
     * @param {string} deviceName - the device name
     * @param {function} callback - callback function with the signature <code>callback(err)</code>
     */
    this.deleteDevice = function(userId, deviceName, callback) {
-      // make sure the userId is a string
-      userId = String(userId);
-
       if (typeof callback === 'function') {
          if (!isUserIdValid(userId)) {
-            var msg = " User ID must be a positive integer";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { userId : msg })));
+            const msg = " User ID must be a positive integer";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { userId : msg })));
          }
-         if (!BodyTrackDatastore.isValidKey(deviceName)) {
-            var msg = "Invalid device name";
-            return callback(new DatastoreError(createJSendClientValidationError(msg, { deviceName : msg })));
+         else if (!BodyTrackDatastore.isValidKey(deviceName)) {
+            const msg = "Invalid device name";
+            callback(new DatastoreError(new JSendClientValidationError(msg, { deviceName : msg })));
          }
+         else {
+            const deviceDirectoryPath = path.join(dataDir, userId.toString(), deviceName);
+            log.debug("Attempting to delete device at path [" + deviceDirectoryPath + "]");
 
-         var deviceDirectoryPath = path.join(dataDir, userId, deviceName);
-         log.debug("Attempting to delete device at path [" + deviceDirectoryPath + "]");
-
-         rimraf(deviceDirectoryPath, { glob : false }, function(err) {
-            if (err) {
-               log.error("Failed to delete device directory [" + deviceDirectoryPath + "]");
-               callback(err);
-            }
-            else {
-               callback(null);
-            }
-         });
+            rimraf(deviceDirectoryPath, { glob : false }, function(err) {
+               if (err) {
+                  log.error("Failed to delete device directory [" + deviceDirectoryPath + "]");
+                  callback(err);
+               }
+               else {
+                  callback(null);
+               }
+            });
+         }
       }
    };
 }
@@ -770,12 +773,12 @@ function BodyTrackDatastore(config) {
  * @returns {boolean}
  */
 BodyTrackDatastore.isValidKey = function(key) {
-   return util.isString(key) &&                                // is defined, non-null, and a string
+   return TypeUtils.isString(key) &&                           // is defined, non-null, and a string
           key.length > 0 &&                                    // is non empty
           key.charAt(0) != '.' &&                              // doesn't start with a dot
           key.slice(-1) != '.' &&                              // doesn't end with a dot
           key.indexOf('..') < 0 &&                             // doesn't have two consecutive dots
-          key.match(VALID_KEY_CHARACTERS_PATTERN) != null;     // contains only legal characters
+          key.match(VALID_KEY_CHARACTERS_PATTERN) !== null;    // contains only legal characters
 };
 
 module.exports = BodyTrackDatastore;

@@ -1,61 +1,46 @@
-var config = require('./config');
-var fs = require('fs');
-var path = require('path');
-var expect = require('chai').expect;
-var should = require('should');
-var BodyTrackDatastore = require('../index');
-var DatastoreError = require('../lib/errors').DatastoreError;
-var deleteDir = require('rimraf');
+const config = require('./config');
+const fs = require('fs');
+const path = require('path');
+const expect = require('chai').expect;
+const should = require('should');
+const BodyTrackDatastore = require('../index');
+const DatastoreError = require('../lib/DatastoreError');
+const deleteDir = require('rimraf');
 
-var log4js = require('log4js');
-log4js.configure({
-                    "replaceConsole" : false,
-                    "appenders" : [
-                       {
-                          "type" : "console",
-                          "layout" : {
-                             "type" : "pattern",
-                             "pattern" : "%d{ABSOLUTE} [%[%p%]] %c - %m"
-                          }
-                       }
-                    ],
-                    "levels" : {
-                       "[all]" : "DEBUG"
-                    }
-                 });
-var log = log4js.getLogger("bodytrack-datastore:test");
+const log4js = require('log4js');
+log4js.configure('./test/log4js-config.json');
 
 // data files
-var emptyData = require('./data/empty_data.json');
-var multipleEmptyData = require('./data/multiple_empty_data.json');
-var validData1 = require('./data/valid1.json');
-var validData2 = require('./data/valid2.json');
-var validData3 = require('./data/valid3.json');
-var validData4 = require('./data/valid4.json');
-var validData5 = require('./data/valid5.json');
-var validData6 = require('./data/valid6.json');
-var validData7 = require('./data/valid7.json');
-var validData8 = require('./data/valid8.json');
-var multipleValidData = require('./data/multiple_valid.json');
-var validInfoAllDevices = require('./data/valid_info_all_devices.json');
-var validInfoSpeck1Device = require('./data/valid_info_speck1_device.json');
-var validInfoSpeck2Device = require('./data/valid_info_speck2_device.json');
-var validInfoSpeck2DeviceWithFilteredTime = require('./data/valid_info_speck2_device_with_filtered_time.json');
-var validInfoSpeck1DeviceHumidityChannel = require('./data/valid_info_speck1_device_humidity_channel.json');
-var validInfoSpeck2DeviceParticlesChannel = require('./data/valid_info_speck2_device_particles_channel.json');
-var validInfoAllDevicesWithMostRecent = require('./data/valid_info_all_devices_with_most_recent.json');
-var validInfoSpeck1DeviceWithMostRecent = require('./data/valid_info_speck1_device_with_most_recent.json');
-var validInfoSpeck2DeviceWithMostRecent = require('./data/valid_info_speck2_device_with_most_recent.json');
-var validInfoSpeck1DeviceHumidityChannelWithMostRecent = require('./data/valid_info_speck1_device_humidity_channel_with_most_recent.json');
-var validInfoSpeck2DeviceParticlesChannelWithMostRecent = require('./data/valid_info_speck2_device_particles_channel_with_most_recent.json');
-var validInfoFakeDevice1 = require('./data/valid_info_fake_device1.json');
-var validInfoFakeDeviceWithMostRecent1 = require('./data/valid_info_fake_device_with_most_recent1.json');
-var validInfoFakeDevice2 = require('./data/valid_info_fake_device2.json');
-var validInfoFakeDeviceWithMostRecent2 = require('./data/valid_info_fake_device_with_most_recent2.json');
-var validInfoFakeDevice3 = require('./data/valid_info_fake_device3.json');
-var validInfoFakeDeviceWithMostRecent3 = require('./data/valid_info_fake_device_with_most_recent3.json');
-var gettile_neg3_21630549 = require('./data/gettile_-3_21630549.json');
-var gettile_neg9_1384355148 = require('./data/gettile_-9_1384355148.json');
+const emptyData = require('./data/empty_data.json');
+const multipleEmptyData = require('./data/multiple_empty_data.json');
+const validData1 = require('./data/valid1.json');
+const validData2 = require('./data/valid2.json');
+const validData3 = require('./data/valid3.json');
+const validData4 = require('./data/valid4.json');
+const validData5 = require('./data/valid5.json');
+const validData6 = require('./data/valid6.json');
+const validData7 = require('./data/valid7.json');
+const validData8 = require('./data/valid8.json');
+const multipleValidData = require('./data/multiple_valid.json');
+const validInfoAllDevices = require('./data/valid_info_all_devices.json');
+const validInfoSpeck1Device = require('./data/valid_info_speck1_device.json');
+const validInfoSpeck2Device = require('./data/valid_info_speck2_device.json');
+const validInfoSpeck2DeviceWithFilteredTime = require('./data/valid_info_speck2_device_with_filtered_time.json');
+const validInfoSpeck1DeviceHumidityChannel = require('./data/valid_info_speck1_device_humidity_channel.json');
+const validInfoSpeck2DeviceParticlesChannel = require('./data/valid_info_speck2_device_particles_channel.json');
+const validInfoAllDevicesWithMostRecent = require('./data/valid_info_all_devices_with_most_recent.json');
+const validInfoSpeck1DeviceWithMostRecent = require('./data/valid_info_speck1_device_with_most_recent.json');
+const validInfoSpeck2DeviceWithMostRecent = require('./data/valid_info_speck2_device_with_most_recent.json');
+const validInfoSpeck1DeviceHumidityChannelWithMostRecent = require('./data/valid_info_speck1_device_humidity_channel_with_most_recent.json');
+const validInfoSpeck2DeviceParticlesChannelWithMostRecent = require('./data/valid_info_speck2_device_particles_channel_with_most_recent.json');
+const validInfoFakeDevice1 = require('./data/valid_info_fake_device1.json');
+const validInfoFakeDeviceWithMostRecent1 = require('./data/valid_info_fake_device_with_most_recent1.json');
+const validInfoFakeDevice2 = require('./data/valid_info_fake_device2.json');
+const validInfoFakeDeviceWithMostRecent2 = require('./data/valid_info_fake_device_with_most_recent2.json');
+const validInfoFakeDevice3 = require('./data/valid_info_fake_device3.json');
+const validInfoFakeDeviceWithMostRecent3 = require('./data/valid_info_fake_device_with_most_recent3.json');
+const gettile_neg3_21630549 = require('./data/gettile_-3_21630549.json');
+const gettile_neg9_1384355148 = require('./data/gettile_-9_1384355148.json');
 
 const DATA_DIR = "./test/test_datastore";
 
@@ -63,54 +48,49 @@ before(function(initDone) {
    // delete the data directory, so we're sure we're always starting fresh
    deleteDir(DATA_DIR, function(err) {
       if (err) {
-         return initDone(err);
+         initDone(err);
+      } else {
+         // create the data directory
+         fs.mkdir(DATA_DIR, initDone);
       }
-
-      // create the data directory
-      fs.mkdir(DATA_DIR, function(err) {
-         if (err) {
-            return initDone(err);
-         }
-
-         initDone();
-      });
    })
 });
 
 describe('BodyTrackDatastore constructor', function() {
    it("should throw an Error for undefined config", function() {
       expect(function() {
-         new BodyTrackDatastore()
+         // noinspection JSCheckFunctionSignatures
+         new BodyTrackDatastore();
       }).to.throw(Error);
    });
    it("should throw an Error for null config", function() {
       expect(function() {
-         new BodyTrackDatastore(null)
+         new BodyTrackDatastore(null);
       }).to.throw(Error);
    });
    it("should throw an Error for undefined binDir and dataDir", function() {
       expect(function() {
-         new BodyTrackDatastore({})
+         new BodyTrackDatastore({});
       }).to.throw(Error);
    });
    it("should throw an Error for undefined binDir", function() {
       expect(function() {
-         new BodyTrackDatastore({ dataDir : "foo" })
+         new BodyTrackDatastore({ dataDir : "foo" });
       }).to.throw(Error);
    });
    it("should throw an Error for undefined dataDir", function() {
       expect(function() {
-         new BodyTrackDatastore({ binDir : "foo" })
+         new BodyTrackDatastore({ binDir : "foo" });
       }).to.throw(Error);
    });
    it("should throw an Error for null binDir and dataDir", function() {
       expect(function() {
-         new BodyTrackDatastore({ binDir : null, dataDir : null })
+         new BodyTrackDatastore({ binDir : null, dataDir : null });
       }).to.throw(Error);
    });
    it("should throw an Error for null binDir", function() {
       expect(function() {
-         new BodyTrackDatastore({ binDir : null, dataDir : "foo" })
+         new BodyTrackDatastore({ binDir : null, dataDir : "foo" });
       }).to.throw(Error);
    });
    it("should throw an Error for null dataDir", function() {
@@ -128,18 +108,18 @@ describe("The test datastore data directory", function() {
       expect(fs.statSync(DATA_DIR).isDirectory()).to.be.true;
 
       // create the datastore instance we'll use for the remaining tests
-      var datastore = new BodyTrackDatastore({
+      const datastore = new BodyTrackDatastore({
          binDir : config.binDir,
          dataDir : DATA_DIR
       });
 
-      var verifyFailure = function(err, done) {
+      const verifyFailure = function(err, done) {
          expect(err).to.not.be.null;
 
          done();
       };
 
-      var verifyValidationError = function(err, nameOfInvalidField, done) {
+      const verifyValidationError = function(err, nameOfInvalidField, done) {
          expect(err).to.not.be.null;
          expect(err instanceof DatastoreError).to.be.true;
          expect(err.data).to.not.be.null;
@@ -157,7 +137,7 @@ describe("The test datastore data directory", function() {
          });
 
          describe('importJson()', function() {
-            var verifyImportSuccess = function(userId, err, response, deviceName, expectedRecordCount, expectedImportBounds, expectedDeviceBounds, done) {
+            const verifyImportSuccess = function(userId, err, response, deviceName, expectedRecordCount, expectedImportBounds, expectedDeviceBounds, done) {
                expect(err).to.be.null;
                expect(response).to.not.be.null;
                expect(response.min_time).to.equal(expectedImportBounds.min_time);

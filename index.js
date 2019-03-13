@@ -611,7 +611,7 @@ function BodyTrackDatastore(config) {
          else {
 
             // create a temp file to write the uploaded data so the datastore can import it
-            TempFile.create({ prefix : 'node_bodytrack_datastore_json_data_to_import_', suffix : '.json' },
+            TempFile.create({ prefix : 'node_bodytrack_datastore_json_data_to_import', suffix : '.json' },
                             function(createTempFileErr, tempFile) {
                                if (createTempFileErr) {
                                   callback(new DatastoreError(new JSendServerError('Upload failed due to an error trying to open the temp file')));

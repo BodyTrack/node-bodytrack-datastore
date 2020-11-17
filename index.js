@@ -312,21 +312,25 @@ function BodyTrackDatastore(config) {
 
    /**
     * <p>
-    * Exports data from the specified device+channel(s) as CSV or JSON, optionally filtered by min and max time. Data is
-    * returned to the caller as an EventEmitter given to the <code>callback</code> function. The devices and channels to
-    * export are defined by the <code>userIdDeviceChannelObjects</code> argument. The
-    * <code>userIdDeviceChannelObjects</code> argument must be a non-empty array of objects, where each object is
-    * of the form: <code>{userId: USER_ID, deviceName: "DEVICE_NAME", channelNames: ["CHANNEL_NAME_1",...]}</code>. The
+    * Exports data from the specified device+channel(s) as CSV or JSON, optionally constrained by min and max time. Data
+    * is returned to the caller as an EventEmitter given to the <code>callback</code> function. The devices and channels
+    * to export are defined by the <code>userIdDeviceChannelObjects</code> argument. The
+    * <code>userIdDeviceChannelObjects</code> argument must be a non-empty array of objects, where each object is of the
+    * form: <code>{userId: USER_ID, deviceName: "DEVICE_NAME", channelNames: ["CHANNEL_NAME_1",...]}</code>. The
     * <code>userId</code> field must be an integer, the <code>deviceName</code> a string, and the
     * <code>channelName</code> must be an array of strings.
     * </p>
     * <p>
-    * To filter the data by time, the given <code>filter</code> object may contain a <code>minTime</code> and/or a
-    * <code>maxTime</code>.
+    * To constrained the data by time range, the given <code>desiredOptions</code> object may contain a
+    * <code>minTime</code> and/or a <code>maxTime</code>.
     * <ul>
     *    <li><code>minTime</code></li>
     *    <li><code>maxTime</code></li>
     * </ul>
+    * </p>
+    * <p>
+    * Output format defaults to CSV, but you can explicitly choose between CSV and JSON with the <code>format</code>
+    * option in the given <code>desiredOptions</code> object.
     * </p>
     * <p>
     * The callback is called with a <code>DatastoreError</code> if:
@@ -335,6 +339,7 @@ function BodyTrackDatastore(config) {
     *    <li>any object in the userIdDeviceChannelObjects array contains invalid fields</li>
     *    <li>the min time (if specified) is invalid</li>
     *    <li>the max time (if specified) is invalid</li>
+    *    <li>the format (if specified) is invalid</li>
     * </ul>
     * The DatastoreError given to the callback will contain a JSend compliant object in the <code>data</code> property
     * with more details about the error.
@@ -353,10 +358,10 @@ function BodyTrackDatastore(config) {
     * </p>
     *
     * @param {Array} userIdDeviceChannelObjects - a non-empty array of objects. See above for details.
-    * @param {object} desiredFilter Object containing the various filter parameters
+    * @param {object} desiredOptions Object containing the various option parameters
     * @param {function} callback - callback function with the signature <code>callback(err, eventEmitter)</code>
     */
-   this.exportData = function(userIdDeviceChannelObjects, desiredFilter = {}, callback) {
+   this.exportData = function(userIdDeviceChannelObjects, desiredOptions = {}, callback) {
       if (typeof callback === 'function') {
 
          validateUserIdDeviceChannelObjects(userIdDeviceChannelObjects,
@@ -365,11 +370,11 @@ function BodyTrackDatastore(config) {
                                                   return callback(err);
                                                }
 
-                                               // make sure the filter is non-null
-                                               const filter = desiredFilter === null ? {} : desiredFilter;
+                                               // make sure the options is non-null
+                                               const options = desiredOptions === null ? {} : desiredOptions;
 
                                                // default to CSV format if unspecified
-                                               let format = TypeUtils.isDefinedAndNotNull(filter) && TypeUtils.isDefinedAndNotNull(filter.format) ? filter.format : 'csv';
+                                               let format = TypeUtils.isDefinedAndNotNull(options) && TypeUtils.isDefinedAndNotNull(options.format) ? options.format : 'csv';
 
                                                // make sure the format is valid
                                                if (TypeUtils.isString(format)) {
@@ -386,27 +391,27 @@ function BodyTrackDatastore(config) {
                                                const parameters = ['--' + format];
 
                                                // see whether the caller specified the min time
-                                               if (filter.hasOwnProperty('minTime') && filter['minTime'] !== null) {
+                                               if (options.hasOwnProperty('minTime') && options['minTime'] !== null) {
 
                                                   // make sure the minTime is valid
-                                                  if (!TypeUtils.isNumeric(filter['minTime'])) {
+                                                  if (!TypeUtils.isNumeric(options['minTime'])) {
                                                      const msg = "Invalid min time";
                                                      return callback(new DatastoreError(new JSendClientValidationError(msg, { minTime : msg })));
                                                   }
                                                   parameters.push("--start");
-                                                  parameters.push(parseFloat(filter['minTime']));
+                                                  parameters.push(parseFloat(options['minTime']));
                                                }
 
                                                // see whether the caller specified the max time
-                                               if (filter.hasOwnProperty('maxTime') && filter['maxTime'] !== null) {
+                                               if (options.hasOwnProperty('maxTime') && options['maxTime'] !== null) {
 
                                                   // make sure the maxTime is valid
-                                                  if (!TypeUtils.isNumeric(filter['maxTime'])) {
+                                                  if (!TypeUtils.isNumeric(options['maxTime'])) {
                                                      const msg = "Invalid max time";
                                                      return callback(new DatastoreError(new JSendClientValidationError(msg, { maxTime : msg })));
                                                   }
                                                   parameters.push("--end");
-                                                  parameters.push(parseFloat(filter['maxTime']));
+                                                  parameters.push(parseFloat(options['maxTime']));
                                                }
 
                                                parameters.push(dataDir);

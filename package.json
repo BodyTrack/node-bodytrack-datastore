@@ -34,8 +34,8 @@
   "dependencies": {
     "@log4js-node/log4js-api": "^1.0.2",
     "data-type-utils": "^1.4.2",
-    "http-status": "^1.4.2",
-    "jsend-utils": "^2.0.0",
+    "http-status": "^1.5.0",
+    "jsend-utils": "^3.0.1",
     "rimraf": "^3.0.2"
   },
   "engines": {

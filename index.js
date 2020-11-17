@@ -312,7 +312,7 @@ function BodyTrackDatastore(config) {
 
    /**
     * <p>
-    * Exports data from the specified device+channel(s) as CSV, optionally filtered by min and max time. Data is
+    * Exports data from the specified device+channel(s) as CSV or JSON, optionally filtered by min and max time. Data is
     * returned to the caller as an EventEmitter given to the <code>callback</code> function. The devices and channels to
     * export are defined by the <code>userIdDeviceChannelObjects</code> argument. The
     * <code>userIdDeviceChannelObjects</code> argument must be a non-empty array of objects, where each object is

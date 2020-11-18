@@ -8,6 +8,7 @@ const DatastoreError = require('./lib/DatastoreError');
 const JSendClientValidationError = require('jsend-utils').JSendClientValidationError;
 const JSendServerError = require('jsend-utils').JSendServerError;
 const rimraf = require('rimraf');
+const moment = require('moment-timezone');
 const log = require('@log4js-node/log4js-api').getLogger("bodytrack-datastore");
 
 const DATASTORE_EXECUTABLES = ['export', 'gettile', 'import', 'info'];
@@ -389,6 +390,32 @@ function BodyTrackDatastore(config) {
 
                                                // specify the format (CSV or JSON)
                                                const parameters = ['--' + format];
+
+                                               // see whether the caller specified the timezone
+                                               if (options.hasOwnProperty('timezone') && options['timezone'] !== null) {
+                                                  // start by simply making sure the specified timezone is a non-empty string
+                                                  if (TypeUtils.isNonEmptyString(options['timezone'])) {
+                                                     // Make sure the timezone is valid because we definitely don't want
+                                                     // any old user-supplied string passed as an argument. We do so by
+                                                     // asking Moment whether this is a valid timezone (null if not).
+                                                     // https://stackoverflow.com/a/44118363/703200
+                                                     // https://momentjs.com/timezone/docs/#/data-loading/checking-if-a-zone-exists/
+                                                     const zone = moment.tz.zone(options['timezone']);
+
+                                                     // Moment doesn't care about case, but the C++ library used by the
+                                                     // datastore does.  So let's go ahead and be just as strict here:
+                                                     if (zone === null || zone.name !== options['timezone']) {
+                                                        const msg = "Invalid timezone";
+                                                        return callback(new DatastoreError(new JSendClientValidationError(msg, { minTime : msg })));
+                                                     }
+                                                     parameters.push("--timezone");
+                                                     parameters.push(options['timezone']);
+                                                  }
+                                                  else {
+                                                     const msg = "Invalid timezone. Timezone must be a String.";
+                                                     return callback(new DatastoreError(new JSendClientValidationError(msg, { minTime : msg })));
+                                                  }
+                                               }
 
                                                // see whether the caller specified the min time
                                                if (options.hasOwnProperty('minTime') && options['minTime'] !== null) {

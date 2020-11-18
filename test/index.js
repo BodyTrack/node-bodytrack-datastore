@@ -21,6 +21,7 @@ const validData5 = require('./data/valid5.json');
 const validData6 = require('./data/valid6.json');
 const validData7 = require('./data/valid7.json');
 const validData8 = require('./data/valid8.json');
+const validData9 = require('./data/valid9.json');  // contains nearly a full year of data, for testing daylight-savings + timezones
 const multipleValidData = require('./data/multiple_valid.json');
 const validInfoAllDevices = require('./data/valid_info_all_devices.json');
 const validInfoSpeck1Device = require('./data/valid_info_speck1_device.json');
@@ -49,7 +50,8 @@ before(function(initDone) {
    deleteDir(DATA_DIR, function(err) {
       if (err) {
          initDone(err);
-      } else {
+      }
+      else {
          // create the data directory
          fs.mkdir(DATA_DIR, initDone);
       }
@@ -300,7 +302,7 @@ describe("The test datastore data directory", function() {
                      // TODO: Known bugs: deletes from the datastore currently (2014-12-01) don't update the min/max
                      // time or min/max values.  Once that's fixed, we'll need to update this test.
 
-                     verifyImportSuccess(                                                   2,                                                 err, response, "speck1",                        1,
+                     verifyImportSuccess(2, err, response, "speck1", 1,
                                          { min_time : 1384357121, max_time : 1384357125 },  // see "Known bugs" above
                                          { min_time : 1384357121, max_time : 1384357125 },  // see "Known bugs" above
                                          function() {
@@ -1341,10 +1343,11 @@ describe("The test datastore data directory", function() {
             };
 
             var userId = 3;
-            var deviceName = "speck";
+            var deviceName1 = "speck";
+            var deviceName2 = "lots_of_data";
             before(function(initDone) {
                datastore.importJson(userId,
-                                    deviceName,
+                                    deviceName1,
                                     [{
                                        "channel_names" : ["humidity", "particles", "raw_particles", "annotation"],
                                        "data" : [
@@ -1359,13 +1362,21 @@ describe("The test datastore data directory", function() {
                                        return initDone(err);
                                     });
             });
+            before(function(initDone) {
+               datastore.importJson(userId,
+                                    deviceName2,
+                                    validData9,
+                                    function(err, response) {
+                                       return initDone(err);
+                                    });
+            });
 
             describe("successes", function() {
 
-               it('should export successfully all channels without filtering (CSV)', function(done) {
+               it('should export successfully all channels without filtering (CSV) [deviceName1]', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["humidity", "particles", "raw_particles", "annotation"]
                                        }],
                                        null,
@@ -1385,10 +1396,31 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
-               it('should export successfully all channels without filtering (JSON)', function(done) {
+               it('should export successfully all channels without filtering (CSV) [deviceName2]', function(done) {
+                  // first read in the expected response
+                  const expectedData = fs.readFileSync('./test/data/lots_of_data_export_no_timezone.csv', 'utf8');
+
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName2,
+                                          channelNames : ["SO2_PPM", "OUT_T_DEGC"]
+                                       }],
+                                       null,
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               expectedData,
+                                                               done);
+                                       });
+               });
+
+               it('should export successfully all channels without filtering (JSON) [deviceName1]', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
                                           channelNames : ["humidity", "particles", "raw_particles", "annotation"]
                                        }],
                                        { format : "json" },
@@ -1409,10 +1441,114 @@ describe("The test datastore data directory", function() {
                                        });
                });
 
+               it('should export successfully all channels without filtering (JSON) [deviceName2]', function(done) {
+                  const expectedData = fs.readFileSync('./test/data/lots_of_data_export_no_timezone.json', 'utf8');
+
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName2,
+                                          channelNames : ["SO2_PPM", "OUT_T_DEGC"]
+                                       }],
+                                       { format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               expectedData,
+                                                               done);
+                                       });
+               });
+
+               it('should export successfully all channels and return appropriate timestamps when specifying timezone UTC (CSV)', function(done) {
+                  // first read in the expected response
+                  const expectedData = fs.readFileSync('./test/data/lots_of_data_export_utc.csv', 'utf8');
+
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName2,
+                                          channelNames : ["SO2_PPM", "OUT_T_DEGC"]
+                                       }],
+                                       { timezone : 'UTC' },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               expectedData,
+                                                               done);
+                                       });
+               });
+
+               it('should export successfully all channels and return appropriate timestamps when specifying timezone UTC (JSON)', function(done) {
+                  // first read in the expected response
+                  const expectedData = fs.readFileSync('./test/data/lots_of_data_export_utc.json', 'utf8');
+
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName2,
+                                          channelNames : ["SO2_PPM", "OUT_T_DEGC"]
+                                       }],
+                                       { timezone : 'UTC', format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               expectedData,
+                                                               done);
+                                       });
+               });
+
+               it('should export successfully all channels and return appropriate timestamps when specifying timezone America/New_York (CSV)', function(done) {
+                  // first read in the expected response
+                  const expectedData = fs.readFileSync('./test/data/lots_of_data_export_america_new_york.csv', 'utf8');
+
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName2,
+                                          channelNames : ["SO2_PPM", "OUT_T_DEGC"]
+                                       }],
+                                       { timezone : 'America/New_York' },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               expectedData,
+                                                               done);
+                                       });
+               });
+
+               it('should export successfully all channels and return appropriate timestamps when specifying timezone America/New_York (JSON)', function(done) {
+                  // first read in the expected response
+                  const expectedData = fs.readFileSync('./test/data/lots_of_data_export_america_new_york.json', 'utf8');
+
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName2,
+                                          channelNames : ["SO2_PPM", "OUT_T_DEGC"]
+                                       }],
+                                       { timezone : 'America/New_York', format : "json" },
+                                       function(err, eventEmitter) {
+                                          if (err) {
+                                             return done(err);
+                                          }
+
+                                          verifyExportResponse(eventEmitter,
+                                                               expectedData,
+                                                               done);
+                                       });
+               });
+
                it('should export successfully a single channel without filtering (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles"]
                                        }],
                                        null,
@@ -1435,7 +1571,7 @@ describe("The test datastore data directory", function() {
                it('should export successfully a single channel without filtering (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles"]
                                        }],
                                        { format : "json" },
@@ -1459,7 +1595,7 @@ describe("The test datastore data directory", function() {
                it('should ignore multiple instances of a requested channel (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity", "particles", "particles", "humidity"]
                                        }],
                                        null,
@@ -1482,7 +1618,7 @@ describe("The test datastore data directory", function() {
                it('should ignore multiple instances of a requested channel (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity", "particles", "particles", "humidity"]
                                        }],
                                        { format : "json" },
@@ -1506,7 +1642,7 @@ describe("The test datastore data directory", function() {
                it('should return no records if the maxTime is less than the timestamp of the first data record (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles"]
                                        }],
                                        { maxTime : 1384357120 },
@@ -1524,7 +1660,7 @@ describe("The test datastore data directory", function() {
                it('should return no records if the maxTime is less than the timestamp of the first data record (JSON', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles"]
                                        }],
                                        { maxTime : 1384357120, format : "json" },
@@ -1543,7 +1679,7 @@ describe("The test datastore data directory", function() {
                it('should return no records if the minTime is greater than the timestamp of the last data record (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles"]
                                        }],
                                        { minTime : 1384357126 },
@@ -1561,7 +1697,7 @@ describe("The test datastore data directory", function() {
                it('should return no records if the minTime is greater than the timestamp of the last data record (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles"]
                                        }],
                                        { minTime : 1384357126, format : "json" },
@@ -1580,7 +1716,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when minTime is specified (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : 1384357123 },
@@ -1601,7 +1737,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when minTime is specified (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : 1384357123, format : "json" },
@@ -1624,7 +1760,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when maxTime is specified (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { maxTime : 1384357123 },
@@ -1645,7 +1781,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when maxTime is specified (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { maxTime : 1384357123, format : "json" },
@@ -1667,7 +1803,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when both minTime and maxTime are specified to select a subset (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : 1384357122, maxTime : 1384357124 },
@@ -1688,7 +1824,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when both minTime and maxTime are specified to select a subset (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : 1384357122, maxTime : 1384357124, format : "json" },
@@ -1710,7 +1846,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when both minTime and maxTime are specified to select a superset (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : 1384357120, maxTime : 1384357126 },
@@ -1733,7 +1869,7 @@ describe("The test datastore data directory", function() {
                it('should return appropriate records when both minTime and maxTime are specified to select a superset (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : 1384357120, maxTime : 1384357126, format : "json" },
@@ -1757,7 +1893,7 @@ describe("The test datastore data directory", function() {
                it('should return no records when both minTime and maxTime are specified, but with values swapped (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : 1384357124, maxTime : 1384357122 },
@@ -1775,10 +1911,10 @@ describe("The test datastore data directory", function() {
                it('should return no records when both minTime and maxTime are specified, but with values swapped (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
-                                       { minTime : 1384357124, maxTime : 1384357122, format : "json"  },
+                                       { minTime : 1384357124, maxTime : 1384357122, format : "json" },
                                        function(err, eventEmitter) {
                                           if (err) {
                                              return done(err);
@@ -1794,10 +1930,10 @@ describe("The test datastore data directory", function() {
                it('case of format should not matter (CSV)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
-                                       { minTime : 1384357124, maxTime : 1384357122, format: "CSv" },
+                                       { minTime : 1384357124, maxTime : 1384357122, format : "CSv" },
                                        function(err, eventEmitter) {
                                           if (err) {
                                              return done(err);
@@ -1812,10 +1948,10 @@ describe("The test datastore data directory", function() {
                it('case of format should not matter (JSON)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
-                                       { minTime : 1384357124, maxTime : 1384357122, format : "jSoN"  },
+                                       { minTime : 1384357124, maxTime : 1384357122, format : "jSoN" },
                                        function(err, eventEmitter) {
                                           if (err) {
                                              return done(err);
@@ -1832,13 +1968,21 @@ describe("The test datastore data directory", function() {
 
             describe("failures", function() {
                var verifyValidationError = function(err, eventEmitter, done) {
-                  expect(err).to.not.be.null;
-                  expect(err instanceof DatastoreError).to.be.true;
-                  expect(eventEmitter).to.be.undefined;
-                  err.should.have.property('data');
-                  err.data.should.have.property('code', 422);
-                  err.data.should.have.property('status', 'error');
-                  done();
+                  if (err === null && typeof eventEmitter !== 'undefined' && eventEmitter !== null) {
+                     eventEmitter.stderr.on('data', function(data) {
+                        console.log("Caught data on stderr: " + data);
+                        expect(data).to.not.be.null;
+                        done();
+                     });
+                  } else {
+                     expect(err).to.not.be.null;
+                     expect(err instanceof DatastoreError).to.be.true;
+                     expect(eventEmitter).to.be.undefined;
+                     err.should.have.property('data');
+                     err.data.should.have.property('code', 422);
+                     err.data.should.have.property('status', 'error');
+                     done();
+                  }
                };
                it('should fail if userIdDeviceChannelObjects is null', function(done) {
                   datastore.exportData(null, null, function(err, eventEmitter) {
@@ -1874,7 +2018,7 @@ describe("The test datastore data directory", function() {
 
                it('should fail if the userId is undefined', function(done) {
                   datastore.exportData([{
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        null,
@@ -1885,7 +2029,7 @@ describe("The test datastore data directory", function() {
                it('should fail if the userId is null', function(done) {
                   datastore.exportData([{
                                           userId : null,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        null,
@@ -1896,7 +2040,7 @@ describe("The test datastore data directory", function() {
                it('should fail if the userId is invalid', function(done) {
                   datastore.exportData([{
                                           userId : "foo",
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        null,
@@ -1941,7 +2085,7 @@ describe("The test datastore data directory", function() {
                it('should fail if channelNames is undefined', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName
+                                          deviceName : deviceName1
                                        }],
                                        null,
                                        function(err, eventEmitter) {
@@ -1951,7 +2095,7 @@ describe("The test datastore data directory", function() {
                it('should fail if channelNames is null', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : null
                                        }],
                                        null,
@@ -1962,7 +2106,7 @@ describe("The test datastore data directory", function() {
                it('should fail if channelNames is not an array', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : "foo"
                                        }],
                                        null,
@@ -1973,7 +2117,7 @@ describe("The test datastore data directory", function() {
                it('should fail if channelNames is empty', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : []
                                        }],
                                        null,
@@ -1984,7 +2128,7 @@ describe("The test datastore data directory", function() {
                it('should fail if channelNames contains an invalid channel name', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ['particles', '..', 'humidity']
                                        }],
                                        null,
@@ -1996,7 +2140,7 @@ describe("The test datastore data directory", function() {
                it('should fail if the minTime is not a number', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { minTime : "foo" },
@@ -2008,7 +2152,7 @@ describe("The test datastore data directory", function() {
                it('should fail if the maxTime is not a number', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { maxTime : "foo" },
@@ -2020,7 +2164,7 @@ describe("The test datastore data directory", function() {
                it('should fail if the format is not "csv" or "json" (case-insensitive)', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { format : "bogus" },
@@ -2032,7 +2176,7 @@ describe("The test datastore data directory", function() {
                it('should fail if the format is not a string 1', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { format : 42 },
@@ -2044,7 +2188,7 @@ describe("The test datastore data directory", function() {
                it('should fail if the format is not a string 2', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { format : ['a', 'b', 'c'] },
@@ -2056,10 +2200,161 @@ describe("The test datastore data directory", function() {
                it('should fail if the format is not a string 3', function(done) {
                   datastore.exportData([{
                                           userId : userId,
-                                          deviceName : deviceName,
+                                          deviceName : deviceName1,
                                           channelNames : ["particles", "humidity"]
                                        }],
                                        { format : { 'foo' : 'bar' } },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+
+               it('should fail if the timezone is empty', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : '' },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is bogus 1', function(done) {
+                  let x;
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : "Fake/Timezone" },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is bogus 2', function(done) {
+                  let x;
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : "Bogus" },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is bogus 3', function(done) {
+                  let x;
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : " " },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is bogus 4', function(done) {
+                  let x;
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : "America/New-York" },  // it should be an underscore, not dash
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is bogus 5', function(done) {
+                  let x;
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : "utc" },  // Case matters!
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is bogus 5', function(done) {
+                  let x;
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : "america/new_york" },  // Case matters!
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is invalid 1', function(done) {
+                  let x;
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : x },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is invalid 2', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : false },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is invalid 3', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : new Date },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is invalid 4', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : 42 },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is invalid 5', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : ['a', 'b', 'c'] },
+                                       function(err, eventEmitter) {
+                                          verifyValidationError(err, eventEmitter, done);
+                                       });
+               });
+               it('should fail if the timezone is invalid 6', function(done) {
+                  datastore.exportData([{
+                                          userId : userId,
+                                          deviceName : deviceName1,
+                                          channelNames : ["particles", "humidity"]
+                                       }],
+                                       { timezone : ['a', 'b', 'c'] },
                                        function(err, eventEmitter) {
                                           verifyValidationError(err, eventEmitter, done);
                                        });

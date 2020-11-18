@@ -36,6 +36,7 @@
     "data-type-utils": "^1.4.2",
     "http-status": "^1.5.0",
     "jsend-utils": "^3.0.1",
+    "moment-timezone": "^0.5.32",
     "rimraf": "^3.0.2"
   },
   "engines": {

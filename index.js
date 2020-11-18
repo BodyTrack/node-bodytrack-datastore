@@ -412,14 +412,14 @@ function BodyTrackDatastore(config) {
                                                      // datastore does.  So let's go ahead and be just as strict here:
                                                      if (zone === null || zone.name !== options['timezone']) {
                                                         const msg = "Invalid timezone";
-                                                        return callback(new DatastoreError(new JSendClientValidationError(msg, { minTime : msg })));
+                                                        return callback(new DatastoreError(new JSendClientValidationError(msg, { timezone : msg })));
                                                      }
                                                      parameters.push("--timezone");
                                                      parameters.push(options['timezone']);
                                                   }
                                                   else {
                                                      const msg = "Invalid timezone. Timezone must be a String.";
-                                                     return callback(new DatastoreError(new JSendClientValidationError(msg, { minTime : msg })));
+                                                     return callback(new DatastoreError(new JSendClientValidationError(msg, { timezone : msg })));
                                                   }
                                                }
 

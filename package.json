@@ -1,6 +1,6 @@
 {
   "name": "bodytrack-datastore",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "description": "A Node.js interface for the BodyTrack Datastore.",
   "main": "index.js",
   "scripts": {

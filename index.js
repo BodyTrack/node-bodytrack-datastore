@@ -322,7 +322,7 @@ function BodyTrackDatastore(config) {
     * <code>channelName</code> must be an array of strings.
     * </p>
     * <p>
-    * To constrained the data by time range, the given <code>desiredOptions</code> object may contain a
+    * To constrain the data by time range, the given <code>desiredOptions</code> object may contain a
     * <code>minTime</code> and/or a <code>maxTime</code>.
     * <ul>
     *    <li><code>minTime</code></li>
@@ -334,6 +334,11 @@ function BodyTrackDatastore(config) {
     * option in the given <code>desiredOptions</code> object.
     * </p>
     * <p>
+    * Timestamp defaults to UNIX epoch time, but you can optionally specify an IANA timezone with the
+    * <code>timezone</code> option in the given <code>desiredOptions</code> object to receive timestamps in ISO8601
+    * format.  Specified timezone is validated and case-sensitive.
+    * </p>
+    * <p>
     * The callback is called with a <code>DatastoreError</code> if:
     * <ul>
     *    <li>the userIdDeviceChannelObjects is not an non-empty array of objects</li>
@@ -341,6 +346,7 @@ function BodyTrackDatastore(config) {
     *    <li>the min time (if specified) is invalid</li>
     *    <li>the max time (if specified) is invalid</li>
     *    <li>the format (if specified) is invalid</li>
+    *    <li>the timezone (if specified) is invalid</li>
     * </ul>
     * The DatastoreError given to the callback will contain a JSend compliant object in the <code>data</code> property
     * with more details about the error.

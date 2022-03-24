@@ -724,7 +724,7 @@ function BodyTrackDatastore(config) {
                                                                                 datastoreResponse = JSON.parse(stdout);
                                                                              }
                                                                              catch (e) {
-                                                                                log.error("Error parsing datastore response: ", e);
+                                                                                log.error("Error parsing datastore response: [" + userId + "|" + deviceName + "|" + stdout + "]", e);
                                                                                 datastoreResponse = null;
                                                                              }
 

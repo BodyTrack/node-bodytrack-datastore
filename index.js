@@ -685,7 +685,7 @@ function BodyTrackDatastore(config) {
                            "A channel name must be a non-empty string consisting only of alphanumeric characters " +
                            "(upper or lower case), dot (.), underscore (_), or dash (-), and cannot start or end with " +
                            "a dot, or contain two consecutive dots.";
-               callback(new DatastoreError(new JSendClientValidationError(msg, { data : channelNameErrors })));
+               callback(new DatastoreError(new JSendClientValidationError(msg, { invalidChannelNames : channelNameErrors })));
             }
             else {
                // create a temp file to write the uploaded data so the datastore can import it

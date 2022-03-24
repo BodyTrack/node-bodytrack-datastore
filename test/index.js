@@ -417,8 +417,8 @@ describe("The test datastore data directory", function() {
                   err.data.should.have.property('status', 'error');
                   err.data.should.have.property('message');
                   should.exist(err.data.data);
-                  should.exist(err.data.data.data);
-                  should(err.data.data.data).eql(expectedInvalidChannelNames);
+                  should.exist(err.data.data.invalidChannelNames);
+                  should(err.data.data.invalidChannelNames).eql(expectedInvalidChannelNames);
                   done();
                };
 

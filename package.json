@@ -27,15 +27,15 @@
   "devDependencies": {
     "chai": "^4.3.6",
     "jsdoc": "^3.6.10",
-    "log4js": "^6.4.1",
-    "mocha": "^9.2.1",
+    "log4js": "^6.4.4",
+    "mocha": "^9.2.2",
     "should": "^13.2.3"
   },
   "dependencies": {
     "@log4js-node/log4js-api": "^1.0.2",
     "data-type-utils": "^1.4.2",
     "http-status": "^1.5.0",
-    "jsend-utils": "^3.0.3",
+    "jsend-utils": "^3.0.4",
     "moment-timezone": "^0.5.34",
     "rimraf": "^3.0.2"
   },

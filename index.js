@@ -126,6 +126,38 @@ function BodyTrackDatastore(config) {
       return callback(null, userIdDeviceChannels);
    };
 
+   /** Returns the union of the two given sets. */
+   const setUnion = function(s1, s2) {
+      return new Set([...s1, ...s2]);
+   }
+
+   // Validate channel names, IF specified in data.  The data can either be an array of 1 or more import spec objects,
+   // or just a single object, and--to make it even more fun--the datastore is totally happy to import nothing, (i.e.
+   // data is an empty array or an empty object) so we need to be careful and handle both cases AND only attempt
+   // validation if channel names are actually specified.  Function returns an array of all invalid channel names found,
+   // or null if none found.
+   const validateChannelNames = function(data) {
+      // Returns a set of all invalid names found, or an empty set if none are invalid
+      const getInvalidNamesAsSet = function(names) {
+         if (Array.isArray(names)) {
+            return new Set(names.filter(name => !BodyTrackDatastore.isValidKey(name)));
+         }
+         return new Set();
+      };
+
+      let invalidNames = new Set();
+      if (Array.isArray(data)) {
+         for (const importSpec of data) {
+            invalidNames = setUnion(invalidNames, getInvalidNamesAsSet(importSpec['channel_names']));
+         }
+      }
+      else if (Array.isArray(data['channel_names'])) {
+         invalidNames = getInvalidNamesAsSet(data['channel_names']);
+      }
+
+      return invalidNames.size > 0 ? Array.from(invalidNames) : null;
+   };
+
    // PRIVILEGED METHODS
 
    /**
@@ -647,107 +679,116 @@ function BodyTrackDatastore(config) {
             callback(new DatastoreError(new JSendClientValidationError(msg, { data : msg })));
          }
          else {
+            const channelNameErrors = validateChannelNames(data);
+            if (Array.isArray(channelNameErrors) && channelNameErrors.length > 0) {
+               const msg = "Invalid channel name" + (channelNameErrors.length > 1 ? "s" : "") + ". " +
+                           "A channel name must be a non-empty string consisting only of alphanumeric characters " +
+                           "(upper or lower case), dot (.), underscore (_), or dash (-), and cannot start or end with " +
+                           "a dot, or contain two consecutive dots.";
+               callback(new DatastoreError(new JSendClientValidationError(msg, { data : channelNameErrors })));
+            }
+            else {
+               // create a temp file to write the uploaded data so the datastore can import it
+               TempFile.create({ prefix : 'node_bodytrack_datastore_json_data_to_import', suffix : '.json' },
+                               function(createTempFileErr, tempFile) {
+                                  if (createTempFileErr) {
+                                     callback(new DatastoreError(new JSendServerError('Upload failed due to an error trying to open the temp file')));
+                                  }
+                                  else {
+                                     fs.writeFile(tempFile.path,
+                                                  JSON.stringify(data),
+                                                  function(writeToTempFileErr) {
 
-            // create a temp file to write the uploaded data so the datastore can import it
-            TempFile.create({ prefix : 'node_bodytrack_datastore_json_data_to_import', suffix : '.json' },
-                            function(createTempFileErr, tempFile) {
-                               if (createTempFileErr) {
-                                  callback(new DatastoreError(new JSendServerError('Upload failed due to an error trying to open the temp file')));
-                               }
-                               else {
-                                  fs.writeFile(tempFile.path,
-                                               JSON.stringify(data),
-                                               function(writeToTempFileErr) {
+                                                     // try closing the file, regardless of whether the write actually succeeded.  We'll
+                                                     // verify write success later
+                                                     fs.close(tempFile.fd, function(closeTempFileErr) {
+                                                        if (closeTempFileErr) {
+                                                           log.error("Error trying to close the temp file [" + tempFile.path + "]: " + closeTempFileErr);
 
-                                                  // try closing the file, regardless of whether the write actually succeeded.  We'll
-                                                  // verify write success later
-                                                  fs.close(tempFile.fd, function(closeTempFileErr) {
-                                                     if (closeTempFileErr) {
-                                                        log.error("Error trying to close the temp file [" + tempFile.path + "]: " + closeTempFileErr);
-
-                                                        // we couldn't close the file, so it's doubtful that cleaning up will work, but
-                                                        // give it a try anyway...
-                                                        try {
-                                                           tempFile.cleanup();
-                                                        }
-                                                        catch (e) {
-                                                           log.error("Error trying to cleanup the temp file after failing to close it [" + tempFile.path + "]: " + e);
-                                                        }
-
-                                                        callback(new DatastoreError(new JSendServerError('Upload failed due to an error trying to close the temp file')));
-                                                     }
-                                                     else {
-
-                                                        // The file should be closed now, so see whether we actually successfully wrote to
-                                                        // the file.  If not, remove it, and abort.
-                                                        if (writeToTempFileErr) {
-                                                           log.error("Error trying to write to the temp file [" + tempFile.path + "]: " + writeToTempFileErr);
-
+                                                           // we couldn't close the file, so it's doubtful that cleaning up will work, but
+                                                           // give it a try anyway...
                                                            try {
                                                               tempFile.cleanup();
                                                            }
                                                            catch (e) {
-                                                              log.error("Error trying to cleanup the temp file after failing to write to it [" + tempFile.path + "]: " + e);
+                                                              log.error("Error trying to cleanup the temp file after failing to close it [" + tempFile.path + "]: " + e);
                                                            }
 
-                                                           callback(new DatastoreError(new JSendServerError('Failed to write to temp file', err)));
+                                                           callback(new DatastoreError(new JSendServerError('Upload failed due to an error trying to close the temp file')));
                                                         }
                                                         else {
 
-                                                           // we successfully wrote to the file, and successfully closed it, so we're good
-                                                           // to go and ready to pass off to the datastore.  Start by creating the params
-                                                           // for the import command
-                                                           const parameters = [parseInt(userId),
-                                                                               deviceName,
-                                                                               "--format",
-                                                                               "json",
-                                                                               tempFile.path];
+                                                           // The file should be closed now, so see whether we actually successfully wrote to
+                                                           // the file.  If not, remove it, and abort.
+                                                           if (writeToTempFileErr) {
+                                                              log.error("Error trying to write to the temp file [" + tempFile.path + "]: " + writeToTempFileErr);
 
-                                                           executeCommand("import",
-                                                                          parameters,
-                                                                          function(importError, stdout) {
+                                                              try {
+                                                                 tempFile.cleanup();
+                                                              }
+                                                              catch (e) {
+                                                                 log.error("Error trying to cleanup the temp file after failing to write to it [" + tempFile.path + "]: " + e);
+                                                              }
 
-                                                                             // we're done with the temp file now, so clean it up before doing anything else
-                                                                             try {
-                                                                                tempFile.cleanup();
-                                                                             }
-                                                                             catch (e) {
-                                                                                log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
-                                                                             }
+                                                              callback(new DatastoreError(new JSendServerError('Failed to write to temp file', err)));
+                                                           }
+                                                           else {
 
-                                                                             if (importError) {
-                                                                                return callback(new DatastoreError(new JSendServerError('Failed to execute datastore import command', importError)));
-                                                                             }
+                                                              // we successfully wrote to the file, and successfully closed it, so we're good
+                                                              // to go and ready to pass off to the datastore.  Start by creating the params
+                                                              // for the import command
+                                                              const parameters = [parseInt(userId),
+                                                                                  deviceName,
+                                                                                  "--format",
+                                                                                  "json",
+                                                                                  tempFile.path];
 
-                                                                             let datastoreResponse = null;
-                                                                             try {
-                                                                                datastoreResponse = JSON.parse(stdout);
-                                                                             }
-                                                                             catch (e) {
-                                                                                log.error("Error parsing datastore response: [" + userId + "|" + deviceName + "|" + stdout + "]", e);
-                                                                                datastoreResponse = null;
-                                                                             }
+                                                              executeCommand("import",
+                                                                             parameters,
+                                                                             function(importError, stdout) {
 
-                                                                             const wasSuccessful = datastoreResponse !== null &&
-                                                                                                   typeof datastoreResponse['failed_records'] !== 'undefined' &&
-                                                                                                   parseInt(datastoreResponse['failed_records']) === 0 &&
-                                                                                                   typeof datastoreResponse['successful_records'] !== 'undefined' &&
-                                                                                                   datastoreResponse['successful_records'] > 0;
+                                                                                // we're done with the temp file now, so clean it up before doing anything else
+                                                                                try {
+                                                                                   tempFile.cleanup();
+                                                                                }
+                                                                                catch (e) {
+                                                                                   log.error("Error trying to cleanup the temp file [" + tempFile.path + "]: " + e);
+                                                                                }
 
-                                                                             if (wasSuccessful) {
-                                                                                return callback(null, datastoreResponse);
-                                                                             }
+                                                                                if (importError) {
+                                                                                   return callback(new DatastoreError(new JSendServerError('Failed to execute datastore import command', importError)));
+                                                                                }
 
-                                                                             return callback(new DatastoreError(new JSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
+                                                                                let datastoreResponse = null;
+                                                                                try {
+                                                                                   datastoreResponse = JSON.parse(stdout);
+                                                                                }
+                                                                                catch (e) {
+                                                                                   log.error("Error parsing datastore response: [" + userId + "|" + deviceName + "|" + stdout + "]", e);
+                                                                                   datastoreResponse = null;
+                                                                                }
 
-                                                                          });
+                                                                                const wasSuccessful = datastoreResponse !== null &&
+                                                                                                      typeof datastoreResponse['failed_records'] !== 'undefined' &&
+                                                                                                      parseInt(datastoreResponse['failed_records']) === 0 &&
+                                                                                                      typeof datastoreResponse['successful_records'] !== 'undefined' &&
+                                                                                                      datastoreResponse['successful_records'] > 0;
 
+                                                                                if (wasSuccessful) {
+                                                                                   return callback(null, datastoreResponse);
+                                                                                }
+
+                                                                                return callback(new DatastoreError(new JSendServerError('Failed to parse datastore import response as JSON', datastoreResponse)));
+
+                                                                             });
+
+                                                           }
                                                         }
-                                                     }
+                                                     });
                                                   });
-                                               });
-                               }
-                            });
+                                  }
+                               });
+            }
          }
       }
    };
@@ -812,7 +853,7 @@ function BodyTrackDatastore(config) {
  */
 BodyTrackDatastore.isValidKey = function(key) {
    return TypeUtils.isString(key) &&                           // is defined, non-null, and a string
-          key.length > 0 &&                                    // is non empty
+          key.length > 0 &&                                    // is non-empty
           key.charAt(0) != '.' &&                              // doesn't start with a dot
           key.slice(-1) != '.' &&                              // doesn't end with a dot
           key.indexOf('..') < 0 &&                             // doesn't have two consecutive dots

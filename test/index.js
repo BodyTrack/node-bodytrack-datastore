@@ -42,6 +42,10 @@ const validInfoFakeDevice3 = require('./data/valid_info_fake_device3.json');
 const validInfoFakeDeviceWithMostRecent3 = require('./data/valid_info_fake_device_with_most_recent3.json');
 const gettile_neg3_21630549 = require('./data/gettile_-3_21630549.json');
 const gettile_neg9_1384355148 = require('./data/gettile_-9_1384355148.json');
+const invalidChannelName1 = require('./data/invalid_channel_name1.json');
+const invalidChannelName2 = require('./data/invalid_channel_name2.json');
+const invalidChannelName3 = require('./data/invalid_channel_name3.json');
+const invalidChannelName4 = require('./data/invalid_channel_name4.json');
 
 const DATA_DIR = "./test/test_datastore";
 
@@ -111,9 +115,9 @@ describe("The test datastore data directory", function() {
 
       // create the datastore instance we'll use for the remaining tests
       const datastore = new BodyTrackDatastore({
-         binDir : config.binDir,
-         dataDir : DATA_DIR
-      });
+                                                  binDir : config.binDir,
+                                                  dataDir : DATA_DIR
+                                               });
 
       const verifyFailure = function(err, done) {
          expect(err).to.not.be.null;
@@ -401,6 +405,62 @@ describe("The test datastore data directory", function() {
                it('should fail for invalid device name', function(done) {
                   datastore.importJson(1, "foo$bar", {}, function(err) {
                      verifyFailure(err, done);
+                  });
+               });
+
+               const verifyInvalidChannelNameResponse = function(err, expectedInvalidChannelNames, done) {
+                  should.exist(err);
+                  err.should.have.property('name', "DatastoreError");
+                  err.should.have.property('message');
+                  should.exist(err.data);
+                  err.data.should.have.property('code', 422);
+                  err.data.should.have.property('status', 'error');
+                  err.data.should.have.property('message');
+                  should.exist(err.data.data);
+                  should.exist(err.data.data.data);
+                  should(err.data.data.data).eql(expectedInvalidChannelNames);
+                  done();
+               };
+
+               // test invalid channel names
+               it('should fail to import data with an invalid channel name (1)', function(done) {
+                  datastore.importJson(1, "foo", invalidChannelName1, function(err) {
+                     verifyInvalidChannelNameResponse(err, invalidChannelName1['channel_names'], done);
+                  });
+               });
+               it('should fail to import data with an invalid channel name (2)', function(done) {
+                  datastore.importJson(1, "foo", invalidChannelName2, function(err) {
+                     verifyInvalidChannelNameResponse(err, ['this+is+not', 'neither[is]this'], done);
+                  });
+               });
+               it('should fail to import data with an invalid channel name (3)', function(done) {
+                  datastore.importJson(1, "foo", invalidChannelName3, function(err) {
+                     verifyInvalidChannelNameResponse(err,
+                                                      [
+                                                         ' i am not!',
+                                                         'but..i..am..not',
+                                                         '.another-invalid',
+                                                         'and-one-more.',
+                                                      ],
+                                                      done);
+                  });
+               });
+               it('should fail to import data with an invalid channel name (4)', function(done) {
+                  datastore.importJson(1, "foo", invalidChannelName4, function(err) {
+                     verifyInvalidChannelNameResponse(err,
+                                                      [
+                                                         'bad channel',
+                                                         'my*other*bad*channel*name',
+                                                         '.',
+                                                         '..',
+                                                         '..hi',
+                                                         'bye..',
+                                                         '?',
+                                                         '!',
+                                                         '@',
+                                                         ' '
+                                                      ],
+                                                      done);
                   });
                });
             });
@@ -1387,10 +1447,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.humidity,3.speck.particles,3.speck.raw_particles,3.speck.annotation\n" +
-                                                               "1384357121,24,13,1,\n"                                                                   +
-                                                               "1384357122,25,14,2,\n"                                                                   +
-                                                               "1384357123,26,15,3,\"This is the middle data sample\"\n"                                 +
-                                                               "1384357124,27,16,4,\n"                                                                   +
+                                                               "1384357121,24,13,1,\n" +
+                                                               "1384357122,25,14,2,\n" +
+                                                               "1384357123,26,15,3,\"This is the middle data sample\"\n" +
+                                                               "1384357124,27,16,4,\n" +
                                                                "1384357125,28,17,5,\n",
                                                                done);
                                        });
@@ -1559,10 +1619,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles\n" +
-                                                               "1384357121,13\n"               +
-                                                               "1384357122,14\n"               +
-                                                               "1384357123,15\n"               +
-                                                               "1384357124,16\n"               +
+                                                               "1384357121,13\n" +
+                                                               "1384357122,14\n" +
+                                                               "1384357123,15\n" +
+                                                               "1384357124,16\n" +
                                                                "1384357125,17\n",
                                                                done);
                                        });
@@ -1606,10 +1666,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357121,13,24\n"                             +
-                                                               "1384357122,14,25\n"                             +
-                                                               "1384357123,15,26\n"                             +
-                                                               "1384357124,16,27\n"                             +
+                                                               "1384357121,13,24\n" +
+                                                               "1384357122,14,25\n" +
+                                                               "1384357123,15,26\n" +
+                                                               "1384357124,16,27\n" +
                                                                "1384357125,17,28\n",
                                                                done);
                                        });
@@ -1727,8 +1787,8 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357123,15,26\n"                             +
-                                                               "1384357124,16,27\n"                             +
+                                                               "1384357123,15,26\n" +
+                                                               "1384357124,16,27\n" +
                                                                "1384357125,17,28\n",
                                                                done);
                                        });
@@ -1748,9 +1808,9 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
-                                                               "[1384357123,15,26],\n"                             +
-                                                               "[1384357124,16,27],\n"                             +
-                                                               "[1384357125,17,28]\n"                              +
+                                                               "[1384357123,15,26],\n" +
+                                                               "[1384357124,16,27],\n" +
+                                                               "[1384357125,17,28]\n" +
                                                                "]}\n",
                                                                done);
                                        });
@@ -1771,8 +1831,8 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357121,13,24\n"                             +
-                                                               "1384357122,14,25\n"                             +
+                                                               "1384357121,13,24\n" +
+                                                               "1384357122,14,25\n" +
                                                                "1384357123,15,26\n",
                                                                done);
                                        });
@@ -1792,9 +1852,9 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
-                                                               "[1384357121,13,24],\n"                             +
-                                                               "[1384357122,14,25],\n"                             +
-                                                               "[1384357123,15,26]\n"                              +
+                                                               "[1384357121,13,24],\n" +
+                                                               "[1384357122,14,25],\n" +
+                                                               "[1384357123,15,26]\n" +
                                                                "]}\n",
                                                                done);
                                        });
@@ -1814,8 +1874,8 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357122,14,25\n"                             +
-                                                               "1384357123,15,26\n"                             +
+                                                               "1384357122,14,25\n" +
+                                                               "1384357123,15,26\n" +
                                                                "1384357124,16,27\n",
                                                                done);
                                        });
@@ -1835,9 +1895,9 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
-                                                               "[1384357122,14,25],\n"                             +
-                                                               "[1384357123,15,26],\n"                             +
-                                                               "[1384357124,16,27]\n"                              +
+                                                               "[1384357122,14,25],\n" +
+                                                               "[1384357123,15,26],\n" +
+                                                               "[1384357124,16,27]\n" +
                                                                "]}\n",
                                                                done);
                                        });
@@ -1857,10 +1917,10 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "EpochTime,3.speck.particles,3.speck.humidity\n" +
-                                                               "1384357121,13,24\n"                             +
-                                                               "1384357122,14,25\n"                             +
-                                                               "1384357123,15,26\n"                             +
-                                                               "1384357124,16,27\n"                             +
+                                                               "1384357121,13,24\n" +
+                                                               "1384357122,14,25\n" +
+                                                               "1384357123,15,26\n" +
+                                                               "1384357124,16,27\n" +
                                                                "1384357125,17,28\n",
                                                                done);
                                        });
@@ -1880,11 +1940,11 @@ describe("The test datastore data directory", function() {
 
                                           verifyExportResponse(eventEmitter,
                                                                "{\"channel_names\":[\"3.speck.particles\",\"3.speck.humidity\"],\"data\":[\n" +
-                                                               "[1384357121,13,24],\n"                             +
-                                                               "[1384357122,14,25],\n"                             +
-                                                               "[1384357123,15,26],\n"                              +
-                                                               "[1384357124,16,27],\n"                              +
-                                                               "[1384357125,17,28]\n"                              +
+                                                               "[1384357121,13,24],\n" +
+                                                               "[1384357122,14,25],\n" +
+                                                               "[1384357123,15,26],\n" +
+                                                               "[1384357124,16,27],\n" +
+                                                               "[1384357125,17,28]\n" +
                                                                "]}\n",
                                                                done);
                                        });
@@ -1974,7 +2034,8 @@ describe("The test datastore data directory", function() {
                         expect(data).to.not.be.null;
                         done();
                      });
-                  } else {
+                  }
+                  else {
                      expect(err).to.not.be.null;
                      expect(err instanceof DatastoreError).to.be.true;
                      expect(eventEmitter).to.be.undefined;

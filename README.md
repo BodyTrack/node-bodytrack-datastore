@@ -3,7 +3,7 @@ Bodytrack Datastore
 
 A Node.js interface for the BodyTrack Datastore (https://github.com/BodyTrack/datastore).
 
-Tested against Node.js v14.15.0 and v16.14.2.
+Tested against Node.js v18.17.0. Previously tested against v14.15.0 and v16.14.2.
 
 Installation
 ================================

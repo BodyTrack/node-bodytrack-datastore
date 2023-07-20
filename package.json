@@ -4,7 +4,7 @@
   "description": "A Node.js interface for the BodyTrack Datastore.",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --reporter spec",
+    "test": "cross-env ./node_modules/.bin/mocha --reporter spec",
     "api-docs": "./node_modules/.bin/jsdoc index.js"
   },
   "repository": {
@@ -25,18 +25,19 @@
   },
   "homepage": "https://github.com/BodyTrack/node-bodytrack-datastore",
   "devDependencies": {
-    "chai": "^4.3.6",
-    "jsdoc": "^3.6.10",
-    "log4js": "^6.4.4",
-    "mocha": "^9.2.2",
+    "chai": "^4.3.7",
+    "cross-env": "^7.0.3",
+    "jsdoc": "^4.0.2",
+    "log4js": "^6.9.1",
+    "mocha": "^10.2.0",
     "should": "^13.2.3"
   },
   "dependencies": {
     "@log4js-node/log4js-api": "^1.0.2",
     "data-type-utils": "^1.4.2",
-    "http-status": "^1.5.0",
+    "http-status": "^1.6.2",
     "jsend-utils": "^3.0.4",
-    "moment-timezone": "^0.5.34",
+    "moment-timezone": "^0.5.43",
     "rimraf": "^3.0.2"
   },
   "engines": {

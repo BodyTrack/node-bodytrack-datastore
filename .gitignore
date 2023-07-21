@@ -2,3 +2,4 @@
 *.iws
 node_modules
 out
+bin

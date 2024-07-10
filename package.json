@@ -25,19 +25,19 @@
   },
   "homepage": "https://github.com/BodyTrack/node-bodytrack-datastore",
   "devDependencies": {
-    "chai": "^4.3.7",
+    "chai": "^4.4.1",
     "cross-env": "^7.0.3",
-    "jsdoc": "^4.0.2",
+    "jsdoc": "^4.0.3",
     "log4js": "^6.9.1",
-    "mocha": "^10.2.0",
+    "mocha": "^10.6.0",
     "should": "^13.2.3"
   },
   "dependencies": {
     "@log4js-node/log4js-api": "^1.0.2",
     "data-type-utils": "^1.4.2",
-    "http-status": "^1.6.2",
-    "jsend-utils": "^3.0.4",
-    "moment-timezone": "^0.5.43",
+    "http-status": "^1.7.4",
+    "jsend-utils": "^3.0.5",
+    "moment-timezone": "^0.5.45",
     "rimraf": "^3.0.2"
   },
   "engines": {
